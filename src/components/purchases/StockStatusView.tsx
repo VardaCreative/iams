@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { AlertTriangle, Search } from 'lucide-react';
 
-interface StockItem {
+export interface StockItem {
   id: string;
   code: string;
   name: string;
@@ -92,6 +92,61 @@ const StockStatusView = () => {
     if (!date) return 'Never';
     return new Date(date).toLocaleDateString();
   };
+  
+  // Update stock status based on current stock vs min stock level
+  const updateStockStatus = (stockItems: StockItem[]): StockItem[] => {
+    return stockItems.map(item => {
+      let status: 'normal' | 'low' | 'critical' = 'normal';
+      
+      if (item.currentStock <= item.minStockLevel * 0.3) {
+        status = 'critical';
+      } else if (item.currentStock <= item.minStockLevel) {
+        status = 'low';
+      }
+      
+      return { ...item, status };
+    });
+  };
+  
+  // Export the stock items and update method for use in other components
+  React.useEffect(() => {
+    // Make the stock items and methods available globally
+    window.stockManager = {
+      items: stockItems,
+      updateStock: (materialId: string, quantity: number, isAddition: boolean, purchaseDate?: Date) => {
+        setStockItems(prevItems => {
+          const updatedItems = prevItems.map(item => {
+            if (item.id === materialId) {
+              const newStock = isAddition 
+                ? item.currentStock + quantity 
+                : Math.max(0, item.currentStock - quantity);
+                
+              return {
+                ...item,
+                currentStock: newStock,
+                lastPurchaseDate: isAddition && purchaseDate ? purchaseDate : item.lastPurchaseDate,
+                // Update status immediately based on new stock level
+                status: newStock <= item.minStockLevel * 0.3 
+                  ? 'critical' 
+                  : newStock <= item.minStockLevel 
+                    ? 'low' 
+                    : 'normal'
+              };
+            }
+            return item;
+          });
+          
+          return updatedItems;
+        });
+      },
+      getStockItems: () => stockItems
+    };
+    
+    // Clean up when component unmounts
+    return () => {
+      delete window.stockManager;
+    };
+  }, [stockItems]);
 
   return (
     <div className="space-y-6">
@@ -197,5 +252,16 @@ const StockStatusView = () => {
     </div>
   );
 };
+
+// Add type declaration for the global window.stockManager
+declare global {
+  interface Window {
+    stockManager?: {
+      items: StockItem[];
+      updateStock: (materialId: string, quantity: number, isAddition: boolean, purchaseDate?: Date) => void;
+      getStockItems: () => StockItem[];
+    };
+  }
+}
 
 export default StockStatusView;

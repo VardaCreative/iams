@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DataTable from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2, FileText } from 'lucide-react';
@@ -65,6 +65,25 @@ const StockPurchasesManagement = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedPurchase, setSelectedPurchase] = useState<StockPurchase | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Effect to handle initial stock updates for already received items
+  useEffect(() => {
+    const stockManager = window.stockManager;
+    if (stockManager) {
+      // Initialize any 'received' purchases that should already be affecting stock
+      purchases.forEach(purchase => {
+        // Only update if the purchase is already marked as received
+        if (purchase.status === 'received') {
+          stockManager.updateStock(
+            purchase.materialId,
+            purchase.quantity,
+            true,
+            purchase.purchaseDate
+          );
+        }
+      });
+    }
+  }, []);
 
   const formatDate = (date: Date) => {
     return format(new Date(date), 'dd/MM/yyyy');
@@ -197,11 +216,57 @@ const StockPurchasesManagement = () => {
     setTimeout(() => {
       if (selectedPurchase) {
         // Update existing purchase
-        setPurchases(prev => 
-          prev.map(purchase => 
-            purchase.id === selectedPurchase.id ? { ...purchaseData, id: selectedPurchase.id } : purchase
-          )
-        );
+        setPurchases(prev => {
+          const updatedPurchases = prev.map(purchase => {
+            if (purchase.id === selectedPurchase.id) {
+              // Check if status is changing from non-received to received
+              const stockManager = window.stockManager;
+              
+              if (stockManager) {
+                // If status changed from something else to 'received', increase stock
+                if (purchase.status !== 'received' && purchaseData.status === 'received') {
+                  stockManager.updateStock(
+                    purchaseData.materialId, 
+                    purchaseData.quantity, 
+                    true, 
+                    purchaseData.purchaseDate
+                  );
+                } 
+                // If status changed from 'received' to something else, decrease stock
+                else if (purchase.status === 'received' && purchaseData.status !== 'received') {
+                  stockManager.updateStock(
+                    purchase.materialId, 
+                    purchase.quantity, 
+                    false
+                  );
+                } 
+                // If status remains 'received' but quantity changed
+                else if (purchase.status === 'received' && purchaseData.status === 'received' && 
+                  purchase.quantity !== purchaseData.quantity) {
+                  // First remove old quantity
+                  stockManager.updateStock(
+                    purchase.materialId, 
+                    purchase.quantity, 
+                    false
+                  );
+                  // Then add new quantity
+                  stockManager.updateStock(
+                    purchaseData.materialId, 
+                    purchaseData.quantity, 
+                    true, 
+                    purchaseData.purchaseDate
+                  );
+                }
+              }
+              
+              return { ...purchaseData, id: selectedPurchase.id };
+            }
+            return purchase;
+          });
+          
+          return updatedPurchases;
+        });
+        
         toast({
           title: "Purchase updated",
           description: `Purchase order ${purchaseData.purchaseOrder} has been updated.`,
@@ -212,7 +277,19 @@ const StockPurchasesManagement = () => {
           ...purchaseData,
           id: Date.now().toString(), // Generate temporary ID
         };
+        
+        // Update stock if purchase is received
+        if (newPurchase.status === 'received' && window.stockManager) {
+          window.stockManager.updateStock(
+            newPurchase.materialId,
+            newPurchase.quantity,
+            true,
+            newPurchase.purchaseDate
+          );
+        }
+        
         setPurchases(prev => [...prev, newPurchase]);
+        
         toast({
           title: "Purchase added",
           description: `Purchase order ${purchaseData.purchaseOrder} has been added.`,
