@@ -1,55 +1,59 @@
-
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AnimatePresence } from "framer-motion";
-
-// Layout components
-import Sidebar from "@/components/layout/Sidebar";
-import Header from "@/components/layout/Header";
-
-// Pages
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Dashboard from "@/pages/Dashboard";
+import Vendors from "@/pages/Vendors.tsx";
 import Purchases from "@/pages/Purchases";
+import Products from "@/pages/Products";
 import Tasks from "@/pages/Tasks";
-import Production from "@/pages/Production";
 import Sales from "@/pages/Sales";
+import Staff from "@/pages/Staff";
+import Reports from "@/pages/Reports";
 import Settings from "@/pages/Settings";
-import NotFound from "@/pages/NotFound";
+import Login from "@/pages/Login";
+import PrivateRoute from "@/components/PrivateRoute";
+import { Toaster } from "@/components/ui/Toaster";
+import "./index.css";
 
-// Initialize query client
-const queryClient = new QueryClient();
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route
+          path="/*"
+          element={
+            <PrivateRoute>
+              <MainLayout />
+            </PrivateRoute>
+          }
+        />
+      </Routes>
       <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <div className="flex h-screen w-full overflow-hidden">
-          <Sidebar />
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <Header />
-            <main className="flex-1 overflow-auto">
-              <AnimatePresence mode="wait">
-                <Routes>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/purchases" element={<Purchases />} />
-                  <Route path="/tasks" element={<Tasks />} />
-                  <Route path="/production" element={<Production />} />
-                  <Route path="/sales" element={<Sales />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </AnimatePresence>
-            </main>
-          </div>
-        </div>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+    </Router>
+  );
+}
+
+function MainLayout() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    navigate("/dashboard");
+  }, [navigate]);
+
+  return (
+    <Routes>
+      <Route path="dashboard" element={<Dashboard />} />
+      <Route path="vendors" element={<Vendors />} />
+      <Route path="purchases" element={<Purchases />} />
+      <Route path="products" element={<Products />} />
+      <Route path="tasks" element={<Tasks />} />
+      <Route path="sales" element={<Sales />} />
+      <Route path="staff" element={<Staff />} />
+      <Route path="reports" element={<Reports />} />
+      <Route path="settings" element={<Settings />} />
+    </Routes>
+  );
+}
 
 export default App;
