@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import DataTable from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
@@ -146,8 +145,8 @@ const SalesRecord = ({ sales, setSales, salesChannels, inventoryItems }: SalesRe
           description: `Sale record has been updated successfully.`,
         });
       } else {
-        // Add new sale
-        const newSale = {
+        // Add new sale - ensure it has an ID
+        const newSale: Sale = {
           ...data,
           id: Date.now().toString(), // Generate temporary ID
         };

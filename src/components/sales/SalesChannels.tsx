@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import DataTable from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
@@ -96,8 +95,8 @@ const SalesChannels = ({ salesChannels, setSalesChannels }: SalesChannelsProps) 
           description: `${data.name} has been updated successfully.`,
         });
       } else {
-        // Add new channel
-        const newChannel = {
+        // Add new channel - ensure it has an ID
+        const newChannel: SalesChannel = {
           ...data,
           id: Date.now().toString(), // Generate temporary ID
         };

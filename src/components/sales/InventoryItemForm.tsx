@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import FormDialog from "@/components/common/FormDialog";
 
 export interface InventoryItem {
-  id?: string;
+  id: string; // Changed from optional to required
   sku: string;
   name: string;
   category?: string;

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import DataTable from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
@@ -125,8 +124,8 @@ const InventoryManagement = ({ inventoryItems, setInventoryItems }: InventoryMan
           description: `${data.name} has been updated successfully.`,
         });
       } else {
-        // Add new item
-        const newItem = {
+        // Add new item - ensure it has an ID
+        const newItem: InventoryItem = {
           ...data,
           id: Date.now().toString(), // Generate temporary ID
         };

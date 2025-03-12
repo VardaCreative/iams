@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import FormDialog from "@/components/common/FormDialog";
 
 export interface SalesChannel {
-  id?: string;
+  id: string; // Changed from optional to required
   name: string;
   description?: string;
   contactPerson?: string;
