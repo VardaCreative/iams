@@ -1,10 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import PageContainer from '@/components/layout/PageContainer';
-import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import VendorManagement from '@/components/purchases/VendorManagement';
+import RawMaterialsManagement from '@/components/purchases/RawMaterialsManagement';
+import StockPurchasesManagement from '@/components/purchases/StockPurchasesManagement';
+import StockStatusView from '@/components/purchases/StockStatusView';
 
 const Purchases = () => {
   return (
@@ -22,65 +23,19 @@ const Purchases = () => {
           </TabsList>
           
           <TabsContent value="vendors" className="mt-6">
-            <div className="flex justify-end mb-4">
-              <Button size="sm">
-                <Plus size={16} className="mr-2" />
-                Add Vendor
-              </Button>
-            </div>
-            <Card>
-              <CardContent className="p-6">
-                <div className="text-center py-10">
-                  <h3 className="text-lg font-medium text-muted-foreground">Coming Soon</h3>
-                  <p className="text-sm text-muted-foreground mt-1">Vendor management functionality will be available soon.</p>
-                </div>
-              </CardContent>
-            </Card>
+            <VendorManagement />
           </TabsContent>
           
           <TabsContent value="raw-materials" className="mt-6">
-            <div className="flex justify-end mb-4">
-              <Button size="sm">
-                <Plus size={16} className="mr-2" />
-                Add Raw Material
-              </Button>
-            </div>
-            <Card>
-              <CardContent className="p-6">
-                <div className="text-center py-10">
-                  <h3 className="text-lg font-medium text-muted-foreground">Coming Soon</h3>
-                  <p className="text-sm text-muted-foreground mt-1">Raw material management functionality will be available soon.</p>
-                </div>
-              </CardContent>
-            </Card>
+            <RawMaterialsManagement />
           </TabsContent>
           
           <TabsContent value="stock-purchases" className="mt-6">
-            <div className="flex justify-end mb-4">
-              <Button size="sm">
-                <Plus size={16} className="mr-2" />
-                Add Stock Purchase
-              </Button>
-            </div>
-            <Card>
-              <CardContent className="p-6">
-                <div className="text-center py-10">
-                  <h3 className="text-lg font-medium text-muted-foreground">Coming Soon</h3>
-                  <p className="text-sm text-muted-foreground mt-1">Stock purchase functionality will be available soon.</p>
-                </div>
-              </CardContent>
-            </Card>
+            <StockPurchasesManagement />
           </TabsContent>
           
           <TabsContent value="stock-status" className="mt-6">
-            <Card>
-              <CardContent className="p-6">
-                <div className="text-center py-10">
-                  <h3 className="text-lg font-medium text-muted-foreground">Coming Soon</h3>
-                  <p className="text-sm text-muted-foreground mt-1">Stock status monitoring will be available soon.</p>
-                </div>
-              </CardContent>
-            </Card>
+            <StockStatusView />
           </TabsContent>
         </Tabs>
       </div>
