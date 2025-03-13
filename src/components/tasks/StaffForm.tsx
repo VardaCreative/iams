@@ -1,0 +1,165 @@
+
+import React from 'react';
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import FormDialog from "@/components/common/FormDialog";
+import { StaffMember } from './StaffManagement';
+
+interface StaffFormProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (data: StaffMember) => void;
+  initialData?: StaffMember;
+  isLoading?: boolean;
+}
+
+const StaffForm = ({ 
+  open, 
+  onOpenChange, 
+  onSubmit, 
+  initialData,
+  isLoading = false
+}: StaffFormProps) => {
+  const [formData, setFormData] = React.useState<StaffMember>({
+    id: '',
+    name: '',
+    staffId: '',
+    bloodGroup: '',
+    email: '',
+    phone: '',
+    address: '',
+    aadhaar: '',
+    status: 'active',
+    ...initialData
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
+  return (
+    <FormDialog
+      title={initialData ? "Edit Staff Member" : "Add Staff Member"}
+      description="Add or edit staff member information."
+      open={open}
+      onOpenChange={onOpenChange}
+      onSubmit={handleSubmit}
+      isLoading={isLoading}
+    >
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="name">Staff Name *</Label>
+            <Input
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="Full name"
+              required
+            />
+          </div>
+          
+          <div className="grid gap-2">
+            <Label htmlFor="staffId">Staff ID *</Label>
+            <Input
+              id="staffId"
+              name="staffId"
+              value={formData.staffId}
+              onChange={handleChange}
+              placeholder="EMP000"
+              required
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="email">Email *</Label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="email@example.com"
+              required
+            />
+          </div>
+          
+          <div className="grid gap-2">
+            <Label htmlFor="phone">Phone *</Label>
+            <Input
+              id="phone"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              placeholder="Contact phone number"
+              required
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="bloodGroup">Blood Group</Label>
+            <Input
+              id="bloodGroup"
+              name="bloodGroup"
+              value={formData.bloodGroup}
+              onChange={handleChange}
+              placeholder="Blood group (e.g., O+)"
+            />
+          </div>
+          
+          <div className="grid gap-2">
+            <Label htmlFor="aadhaar">Aadhaar Number *</Label>
+            <Input
+              id="aadhaar"
+              name="aadhaar"
+              value={formData.aadhaar}
+              onChange={handleChange}
+              placeholder="1234 5678 9012"
+              required
+            />
+          </div>
+        </div>
+
+        <div className="grid gap-2">
+          <Label htmlFor="address">Address *</Label>
+          <Input
+            id="address"
+            name="address"
+            value={formData.address}
+            onChange={handleChange}
+            placeholder="Complete address"
+            required
+          />
+        </div>
+
+        <div className="grid gap-2">
+          <Label htmlFor="status">Status *</Label>
+          <select
+            id="status"
+            name="status"
+            value={formData.status}
+            onChange={handleChange}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+            required
+          >
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+    </FormDialog>
+  );
+};
+
+export default StaffForm;

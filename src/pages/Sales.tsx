@@ -25,7 +25,7 @@ const Sales = () => {
       title="Sales"
       description="Manage sales channels, inventory, and track sales records"
     >
-      <Tabs defaultValue="channels" className="w-full">
+      <Tabs defaultValue="inventory" className="w-full">
         <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full">
           <TabsTrigger value="channels">Sales Channels</TabsTrigger>
           <TabsTrigger value="salesRecord">Sales Record</TabsTrigger>

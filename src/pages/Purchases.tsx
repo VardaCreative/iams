@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import PageContainer from '@/components/layout/PageContainer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -20,7 +21,7 @@ const Purchases = () => {
       description="Manage vendors, raw materials, and stock purchases"
     >
       <div className="flex justify-between items-center">
-        <Tabs defaultValue="stock-status" className="w-full" onValueChange={handleTabChange}>
+        <Tabs defaultValue="vendors" className="w-full" onValueChange={handleTabChange}>
           <TabsList>
             <TabsTrigger value="vendors">Vendors</TabsTrigger>
             <TabsTrigger value="raw-materials">Raw Materials</TabsTrigger>

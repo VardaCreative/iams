@@ -12,6 +12,7 @@ import Header from "@/components/layout/Header";
 
 // Pages
 import Dashboard from "@/pages/Dashboard";
+import Vendors from "@/pages/Vendors";
 import Purchases from "@/pages/Purchases";
 import Tasks from "@/pages/Tasks";
 import Production from "@/pages/Production";

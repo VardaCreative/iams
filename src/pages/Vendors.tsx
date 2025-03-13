@@ -1,15 +1,29 @@
 
-import { PageContainer } from "@/components/layout/PageContainer";
+import React from 'react';
+import PageContainer from "@/components/layout/PageContainer";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import DataTable from "@/components/ui/data-table";
+import VendorForm from "@/components/purchases/VendorForm";
+import VendorManagement from "@/components/purchases/VendorManagement";
 
 export default function Vendors() {
   return (
-    <PageContainer title="Vendors">
-      <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold mb-4">Vendors Management</h1>
-        <p className="text-gray-600">
-          This page will contain vendor management functionality.
-        </p>
-      </div>
+    <PageContainer
+      title="Vendors"
+      description="Manage your suppliers and vendors"
+    >
+      <Tabs defaultValue="vendors" className="w-full">
+        <TabsList className="mb-6">
+          <TabsTrigger value="vendors">Vendors</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="vendors">
+          <VendorManagement />
+        </TabsContent>
+      </Tabs>
     </PageContainer>
   );
 }
