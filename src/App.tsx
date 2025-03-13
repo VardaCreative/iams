@@ -1,8 +1,9 @@
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Dashboard from "@/pages/Dashboard";
-import Vendors from "@/pages/Vendors.tsx";
+import Vendors from "@/pages/Vendors";
 import Purchases from "@/pages/Purchases";
 import Products from "@/pages/Products";
 import Tasks from "@/pages/Tasks";
@@ -12,7 +13,7 @@ import Reports from "@/pages/Reports";
 import Settings from "@/pages/Settings";
 import Login from "@/pages/Login";
 import PrivateRoute from "@/components/PrivateRoute";
-import { Toaster } from "@/components/ui/Toaster";
+import { Toaster } from "@/components/ui/toast";
 import "./index.css";
 
 function App() {
