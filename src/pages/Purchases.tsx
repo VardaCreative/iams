@@ -21,18 +21,22 @@ const Purchases = () => {
       description="Manage vendors, raw materials, and stock purchases"
     >
       <div className="flex justify-between items-center">
-        <Tabs defaultValue="vendors" className="w-full" onValueChange={handleTabChange}>
-          <TabsList>
+        <Tabs 
+          defaultValue="stock-status" 
+          className="w-full" 
+          onValueChange={handleTabChange} 
+          value={activeTab}
+        >
+          <TabsList className="grid grid-cols-4 w-full max-w-3xl">
             <TabsTrigger value="vendors">Vendors</TabsTrigger>
             <TabsTrigger value="raw-materials">Raw Materials</TabsTrigger>
             <TabsTrigger value="stock-purchases">Stock Purchases</TabsTrigger>
             <TabsTrigger value="stock-status">Stock Status</TabsTrigger>
           </TabsList>
           
-          {/* We need to make sure StockStatusView is mounted first so stockManager is available */}
-          {/* It's loaded regardless of the active tab, but only visible when selected */}
+          {/* Make sure StockStatusView is mounted first */}
           <div className={activeTab !== 'stock-status' ? 'hidden' : ''}>
-            <TabsContent value="stock-status" className="mt-6">
+            <TabsContent value="stock-status" forceMount={true} className="mt-6">
               <StockStatusView />
             </TabsContent>
           </div>

@@ -52,6 +52,39 @@ export const useStockManager = (initialStockItems: StockItem[]) => {
     });
   };
 
+  // Function to manually update the stock
+  const updateStockItem = (
+    itemId: string, 
+    updates: Partial<Omit<StockItem, 'id' | 'code'>>
+  ) => {
+    setStockItems(prev => {
+      const updatedItems = prev.map(item => {
+        if (item.id === itemId) {
+          const updatedItem = { ...item, ...updates };
+          
+          // Automatically update status based on stock level
+          if (updates.currentStock !== undefined || updates.minStockLevel !== undefined) {
+            const currentStock = updates.currentStock ?? item.currentStock;
+            const minLevel = updates.minStockLevel ?? item.minStockLevel;
+            
+            if (currentStock <= minLevel * 0.3) {
+              updatedItem.status = 'critical';
+            } else if (currentStock <= minLevel) {
+              updatedItem.status = 'low';
+            } else {
+              updatedItem.status = 'normal';
+            }
+          }
+          
+          return updatedItem;
+        }
+        return item;
+      });
+      
+      return updatedItems;
+    });
+  };
+
   // Register stock manager globally for other components to use
   useEffect(() => {
     // Make the stock items and methods available globally
@@ -95,5 +128,14 @@ export const useStockManager = (initialStockItems: StockItem[]) => {
     };
   }, [stockItems]);
 
-  return { stockItems, filteredItems, searchTerm, stats, handleSearch };
+  return { 
+    stockItems, 
+    setStockItems,
+    filteredItems, 
+    searchTerm, 
+    stats, 
+    handleSearch,
+    updateStockItem,
+    updateStockStatus
+  };
 };

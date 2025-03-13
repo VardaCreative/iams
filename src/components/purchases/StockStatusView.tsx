@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import StockStatusStats from './StockStatusStats';
 import StockStatusTable from './StockStatusTable';
 import { useStockManager } from './useStockManager';
@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowRightLeft } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { toast } from "@/hooks/use-toast";
 
 const StockStatusView = () => {
   // Initial sample data
@@ -58,14 +59,74 @@ const StockStatusView = () => {
   
   const { filteredItems, searchTerm, stats, handleSearch } = useStockManager(initialStockItems);
 
+  // Load stock data whenever the date changes
+  useEffect(() => {
+    loadStockDataForDate(statusDate);
+  }, [statusDate]);
+
+  // Function to load stock data for a specific date
+  const loadStockDataForDate = (date: string) => {
+    // In a real app, this would fetch data from the API
+    // For now simulate a data load with some calculations
+    
+    // Sample calculations to demonstrate formula implementation
+    const updatedStockData = initialStockItems.map(item => {
+      const openingBal = Math.max(0, item.currentStock - 5); // Simulated opening balance
+      const purchases = Math.floor(Math.random() * 10) + 5; // Random purchases between 5-15
+      const utilised = Math.floor(Math.random() * 5); // Random usage between 0-5
+      const adjPlus = Math.floor(Math.random() * 3) - 1; // Random adjustment between -1 and 1
+      
+      // Calculate closing balance using the formula: opening + purchases - utilised + adjustments
+      const closingBal = openingBal + purchases - utilised + adjPlus;
+      
+      // Determine status based on closing balance vs minimum level
+      let status = 'Normal';
+      if (closingBal <= item.minStockLevel * 0.3) {
+        status = 'Critical';
+      } else if (closingBal <= item.minStockLevel) {
+        status = 'Low Stock';
+      }
+      
+      return {
+        name: item.name,
+        category: item.category,
+        openingBal,
+        purchases,
+        utilised,
+        adjPlus,
+        closingBal,
+        minLevel: item.minStockLevel,
+        status
+      };
+    });
+    
+    setStockData(updatedStockData);
+  };
+
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setStatusDate(e.target.value);
-    // In a real app, would fetch data for the selected date
   };
 
   const handleUpdateStatus = () => {
-    // In a real app, would refresh data for the selected date
+    // Refresh data for the selected date
+    loadStockDataForDate(statusDate);
+    
+    // Provide user feedback
+    toast({
+      title: "Stock status updated",
+      description: `Stock data refreshed for ${new Date(statusDate).toLocaleDateString()}`,
+    });
+    
     console.log("Updating stock status for:", statusDate);
+  };
+
+  // Generate calculated stock metrics for the Stats component
+  const calculateStockMetrics = () => {
+    return {
+      totalItems: stockData.length,
+      lowStock: stockData.filter(item => item.status === 'Low Stock').length,
+      criticalStock: stockData.filter(item => item.status === 'Critical').length
+    };
   };
 
   return (
@@ -133,7 +194,13 @@ const StockStatusView = () => {
                     <TableCell>
                       <Badge 
                         variant={item.status === 'Normal' ? 'outline' : 'secondary'}
-                        className={`${item.status === 'Low Stock' ? 'bg-amber-100 text-amber-800' : ''}`}
+                        className={`${
+                          item.status === 'Low Stock' 
+                            ? 'bg-amber-100 text-amber-800' 
+                            : item.status === 'Critical' 
+                              ? 'bg-red-100 text-red-800' 
+                              : ''
+                        }`}
                       >
                         {item.status}
                       </Badge>
