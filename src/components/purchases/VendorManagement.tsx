@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DataTable from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2, Phone, Mail } from 'lucide-react';
@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { supabase } from '@/integrations/supabase/client';
+import { fetchVendors, saveVendor, deleteVendor } from '@/lib/database';
 
 const VendorManagement = () => {
   const [vendors, setVendors] = useState<Vendor[]>([
@@ -44,6 +45,40 @@ const VendorManagement = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Load vendors from database on component mount and refresh trigger
+  useEffect(() => {
+    const loadVendors = async () => {
+      setIsLoading(true);
+      
+      // In a real implementation, you would use the database.ts functions
+      /*
+      const data = await fetchVendors();
+      if (data.length > 0) {
+        // Map database fields to Vendor type if necessary
+        const formattedVendors = data.map(vendor => ({
+          id: vendor.id,
+          name: vendor.name,
+          contactPerson: vendor.contact_person,
+          email: vendor.email,
+          phone: vendor.phone,
+          address: vendor.address,
+          gstin: vendor.gstin,
+          status: vendor.status
+        }));
+        setVendors(formattedVendors);
+      }
+      */
+      
+      // Simulate API delay
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 500);
+    };
+    
+    loadVendors();
+  }, [refreshTrigger]);
 
   const columns = [
     { header: "Name", accessorKey: "name" },
@@ -121,18 +156,40 @@ const VendorManagement = () => {
     setOpenDeleteDialog(true);
   };
 
-  const handleSubmit = (data: Vendor) => {
+  const handleSubmit = async (data: Vendor) => {
     setIsLoading(true);
     
-    // Save to local state
-    setTimeout(() => {
+    try {
       if (selectedVendor) {
         // Update existing vendor
+        const updatedVendor = { ...data, id: selectedVendor.id };
+        
+        // In a real implementation:
+        /*
+        const savedVendor = await saveVendor({
+          id: updatedVendor.id,
+          name: updatedVendor.name,
+          contact_person: updatedVendor.contactPerson,
+          email: updatedVendor.email,
+          phone: updatedVendor.phone,
+          address: updatedVendor.address,
+          gstin: updatedVendor.gstin,
+          status: updatedVendor.status
+        });
+        
+        if (savedVendor) {
+          // Update succeeded, refresh the vendor list
+          setRefreshTrigger(prev => prev + 1);
+        }
+        */
+        
+        // For now, update local state
         setVendors(prev => 
           prev.map(vendor => 
-            vendor.id === selectedVendor.id ? { ...data, id: selectedVendor.id } : vendor
+            vendor.id === selectedVendor.id ? updatedVendor : vendor
           )
         );
+        
         toast({
           title: "Vendor updated",
           description: `${data.name} has been updated successfully.`,
@@ -143,25 +200,64 @@ const VendorManagement = () => {
           ...data,
           id: Date.now().toString(), // Generate temporary ID
         };
+        
+        // In a real implementation:
+        /*
+        const savedVendor = await saveVendor({
+          id: newVendor.id,
+          name: newVendor.name,
+          contact_person: newVendor.contactPerson,
+          email: newVendor.email,
+          phone: newVendor.phone,
+          address: newVendor.address,
+          gstin: newVendor.gstin,
+          status: newVendor.status
+        });
+        
+        if (savedVendor) {
+          // Save succeeded, refresh the vendor list
+          setRefreshTrigger(prev => prev + 1);
+        }
+        */
+        
+        // For now, update local state
         setVendors(prev => [...prev, newVendor]);
+        
         toast({
           title: "Vendor added",
           description: `${data.name} has been added successfully.`,
         });
       }
-      
+    } catch (error) {
+      console.error('Error saving vendor:', error);
+      toast({
+        title: "Error saving vendor",
+        description: "An error occurred while saving the vendor data.",
+        variant: "destructive"
+      });
+    } finally {
       setIsLoading(false);
       setOpenForm(false);
-    }, 600);
+    }
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!selectedVendor) return;
     
     setIsLoading(true);
     
-    // Delete from local state
-    setTimeout(() => {
+    try {
+      // In a real implementation:
+      /*
+      const success = await deleteVendor(selectedVendor.id);
+      
+      if (success) {
+        // Delete succeeded, refresh the vendor list
+        setRefreshTrigger(prev => prev + 1);
+      }
+      */
+      
+      // For now, update local state
       setVendors(prev => 
         prev.filter(vendor => vendor.id !== selectedVendor.id)
       );
@@ -171,10 +267,17 @@ const VendorManagement = () => {
         description: `${selectedVendor.name} has been deleted.`,
         variant: "destructive",
       });
-      
+    } catch (error) {
+      console.error('Error deleting vendor:', error);
+      toast({
+        title: "Error deleting vendor",
+        description: "An error occurred while deleting the vendor.",
+        variant: "destructive"
+      });
+    } finally {
       setIsLoading(false);
       setOpenDeleteDialog(false);
-    }, 600);
+    }
   };
 
   return (
@@ -186,6 +289,7 @@ const VendorManagement = () => {
         addButtonText="Add Vendor"
         searchPlaceholder="Search vendors..."
         enableImportExport={true}
+        isLoading={isLoading}
       />
 
       <VendorForm
