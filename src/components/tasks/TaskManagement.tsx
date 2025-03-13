@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DataTable from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
 import { Plus, Download, Upload, Edit, Trash2 } from 'lucide-react';
@@ -66,8 +66,16 @@ const TaskManagement = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Effect to ensure data is loaded/refreshed
+  useEffect(() => {
+    // In a real app, this would fetch data from an API
+    console.log("Task data refreshed");
+  }, [refreshTrigger]);
 
   const columns = [
+    { header: "Task ID", accessorKey: "taskId" },
     { header: "Date Assigned", 
       accessorKey: "dateAssigned",
       cell: (value: Date) => value.toLocaleDateString() 
@@ -153,7 +161,7 @@ const TaskManagement = () => {
   const handleSubmit = (data: Task) => {
     setIsLoading(true);
     
-    // Simulate API call
+    // Persist changes with simulated API call
     setTimeout(() => {
       if (selectedTask) {
         // Update existing task
@@ -182,6 +190,8 @@ const TaskManagement = () => {
       
       setIsLoading(false);
       setOpenForm(false);
+      // Trigger refresh
+      setRefreshTrigger(prev => prev + 1);
     }, 600);
   };
 
@@ -190,7 +200,7 @@ const TaskManagement = () => {
     
     setIsLoading(true);
     
-    // Simulate API call
+    // Delete task
     setTimeout(() => {
       setTasks(prev => 
         prev.filter(task => task.id !== selectedTask.id)
@@ -204,6 +214,8 @@ const TaskManagement = () => {
       
       setIsLoading(false);
       setOpenDeleteDialog(false);
+      // Trigger refresh
+      setRefreshTrigger(prev => prev + 1);
     }, 600);
   };
 

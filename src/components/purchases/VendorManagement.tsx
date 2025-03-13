@@ -15,6 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { supabase } from '@/integrations/supabase/client';
 
 const VendorManagement = () => {
   const [vendors, setVendors] = useState<Vendor[]>([
@@ -123,7 +124,7 @@ const VendorManagement = () => {
   const handleSubmit = (data: Vendor) => {
     setIsLoading(true);
     
-    // Simulate API call
+    // Save to local state
     setTimeout(() => {
       if (selectedVendor) {
         // Update existing vendor
@@ -159,7 +160,7 @@ const VendorManagement = () => {
     
     setIsLoading(true);
     
-    // Simulate API call
+    // Delete from local state
     setTimeout(() => {
       setVendors(prev => 
         prev.filter(vendor => vendor.id !== selectedVendor.id)

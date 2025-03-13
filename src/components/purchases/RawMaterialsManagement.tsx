@@ -124,7 +124,7 @@ const RawMaterialsManagement = () => {
   const handleSubmit = (data: RawMaterial) => {
     setIsLoading(true);
     
-    // Simulate API call
+    // Persistence logic
     setTimeout(() => {
       if (selectedMaterial) {
         // Update existing material
@@ -160,7 +160,7 @@ const RawMaterialsManagement = () => {
     
     setIsLoading(true);
     
-    // Simulate API call
+    // Delete logic
     setTimeout(() => {
       setMaterials(prev => 
         prev.filter(material => material.id !== selectedMaterial.id)

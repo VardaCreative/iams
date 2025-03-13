@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DataTable from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2, Phone, Mail } from 'lucide-react';
@@ -58,6 +58,13 @@ const StaffManagement = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [trigger, setTrigger] = useState(0);
+
+  // Effect to ensure the data is loaded when component mounts
+  useEffect(() => {
+    // In a real app, this would fetch data from an API or database
+    console.log("Staff data loaded");
+  }, [trigger]);
 
   const columns = [
     { header: "Staff ID", accessorKey: "staffId" },
@@ -139,7 +146,7 @@ const StaffManagement = () => {
   const handleSubmit = (data: StaffMember) => {
     setIsLoading(true);
     
-    // Simulate API call
+    // Persistence simulation
     setTimeout(() => {
       if (selectedStaff) {
         // Update existing staff
@@ -167,6 +174,8 @@ const StaffManagement = () => {
       
       setIsLoading(false);
       setOpenForm(false);
+      // Trigger refresh
+      setTrigger(prev => prev + 1);
     }, 600);
   };
 
@@ -175,7 +184,7 @@ const StaffManagement = () => {
     
     setIsLoading(true);
     
-    // Simulate API call
+    // Delete simulation
     setTimeout(() => {
       setStaff(prev => 
         prev.filter(member => member.id !== selectedStaff.id)
@@ -189,6 +198,8 @@ const StaffManagement = () => {
       
       setIsLoading(false);
       setOpenDeleteDialog(false);
+      // Trigger refresh
+      setTrigger(prev => prev + 1);
     }, 600);
   };
 

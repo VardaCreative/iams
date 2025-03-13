@@ -5,6 +5,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { ArrowRightLeft } from 'lucide-react';
 
 const months = ["Jan-24", "Feb-24", "Mar-24", "Apr-24"];
 const processStages = ["Pre-Prod", "Production"];
@@ -12,38 +15,137 @@ const processes = ["Cleaning", "Grinding", "Packing"];
 
 // Sample data for the production status tables
 const preProductionData = [
-  { id: "RM1", name: "Red Chilli", opening: 10.00, assigned: 0.00, completed: 10.00, wastage: 0.00, pending: 0.00, adjustments: 0.00, closing: 10.00 },
-  { id: "RM2", name: "Turmeric", opening: 15.00, assigned: 5.00, completed: 10.00, wastage: 0.10, pending: 0.00, adjustments: 0.00, closing: 9.90 },
-  { id: "RM3", name: "Black Pepper", opening: 8.00, assigned: 2.00, completed: 6.00, wastage: 0.20, pending: 0.00, adjustments: 0.00, closing: 5.80 },
-  { id: "RM4", name: "Cumin", opening: 12.00, assigned: 3.00, completed: 9.00, wastage: 0.15, pending: 0.00, adjustments: 0.00, closing: 8.85 },
+  { 
+    id: "RM1", 
+    name: "Red Chilli", 
+    opening: 10.00, 
+    assigned: 0.00, 
+    completed: 10.00, 
+    wastage: 0.00, 
+    pending: 0.00, 
+    adjustments: 0.00, 
+    closing: 10.00, // Calculated as opening + completed - wastage + adjustments
+    minLevel: 5.00
+  },
+  { 
+    id: "RM2", 
+    name: "Turmeric", 
+    opening: 15.00, 
+    assigned: 5.00, 
+    completed: 10.00, 
+    wastage: 0.10, 
+    pending: 0.00, 
+    adjustments: 0.00, 
+    closing: 15.00 + 10.00 - 0.10 + 0.00, // Calculated
+    minLevel: 7.50
+  },
+  { 
+    id: "RM3", 
+    name: "Black Pepper", 
+    opening: 8.00, 
+    assigned: 2.00, 
+    completed: 6.00, 
+    wastage: 0.20, 
+    pending: 0.00, 
+    adjustments: 0.00, 
+    closing: 8.00 + 6.00 - 0.20 + 0.00, // Calculated
+    minLevel: 4.00
+  },
 ];
 
 const productionData = [
-  { id: "SKU1", name: "Red Chilli Powder", opening: 20.00, assigned: 5.00, completed: 15.00, wastage: 0.50, pending: 0.00, adjustments: 0.00, closing: 14.50 },
-  { id: "SKU2", name: "Turmeric Powder", opening: 15.00, assigned: 7.00, completed: 8.00, wastage: 0.30, pending: 0.00, adjustments: 0.00, closing: 7.70 },
-  { id: "SKU3", name: "Black Pepper Powder", opening: 10.00, assigned: 3.00, completed: 7.00, wastage: 0.20, pending: 0.00, adjustments: 0.00, closing: 6.80 },
+  { 
+    id: "SKU1", 
+    name: "Red Chilli Powder", 
+    opening: 20.00, 
+    assigned: 5.00, 
+    completed: 15.00, 
+    wastage: 0.50, 
+    pending: 0.00, 
+    adjustments: 0.00, 
+    closing: 20.00 + 15.00 - 0.50 + 0.00, // Calculated
+    minLevel: 10.00
+  },
+  { 
+    id: "SKU2", 
+    name: "Turmeric Powder", 
+    opening: 15.00, 
+    assigned: 7.00, 
+    completed: 8.00, 
+    wastage: 0.30, 
+    pending: 0.00, 
+    adjustments: 0.00, 
+    closing: 15.00 + 8.00 - 0.30 + 0.00, // Calculated 
+    minLevel: 5.00
+  },
 ];
 
 const packingData = [
-  { id: "PKSKU1", name: "Red Chilli Powder 100g", opening: 40, assigned: 20, completed: 20, wastage: 2, pending: 0, adjustments: 0, closing: 18 },
-  { id: "PKSKU2", name: "Turmeric Powder 50g", opening: 30, assigned: 15, completed: 15, wastage: 0, pending: 0, adjustments: 0, closing: 15 },
-  { id: "PKSKU3", name: "Black Pepper Powder 25g", opening: 25, assigned: 10, completed: 15, wastage: 1, pending: 0, adjustments: 0, closing: 14 },
+  { 
+    id: "PKSKU1", 
+    name: "Red Chilli Powder 100g", 
+    opening: 40, 
+    assigned: 20, 
+    completed: 20, 
+    wastage: 2, 
+    pending: 0, 
+    adjustments: 0, 
+    closing: 40 + 20 - 2 + 0, // Calculated
+    minLevel: 20
+  },
+  { 
+    id: "PKSKU2", 
+    name: "Turmeric Powder 50g", 
+    opening: 30, 
+    assigned: 15, 
+    completed: 15, 
+    wastage: 0, 
+    pending: 0, 
+    adjustments: 0, 
+    closing: 30 + 15 - 0 + 0, // Calculated
+    minLevel: 15
+  },
 ];
 
 const ProductionStatus = () => {
   const [selectedMonth, setSelectedMonth] = useState("Feb-24");
   const [selectedProcessStage, setSelectedProcessStage] = useState("Pre-Prod");
   const [selectedProcess, setSelectedProcess] = useState("Cleaning");
+  const [statusDate, setStatusDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [tableData, setTableData] = useState(preProductionData);
+  
+  // Process and apply the formulas to the table data
+  const processData = (data: any[]) => {
+    return data.map(item => {
+      // Formula: Closing Balance = Opening Balance + Completed - Wastage + Adjustments
+      const closingBalance = item.opening + item.completed - item.wastage + (item.adjustments || 0);
+      
+      return {
+        ...item,
+        closing: parseFloat(closingBalance.toFixed(2))
+      };
+    });
+  };
   
   const getTableData = () => {
     if (selectedProcessStage === "Pre-Prod") {
-      return preProductionData;
+      return processData(preProductionData);
     } else if (selectedProcess === "Grinding") {
-      return productionData;
+      return processData(productionData);
     } else if (selectedProcess === "Packing") {
-      return packingData;
+      return processData(packingData);
     }
-    return preProductionData;
+    return processData(preProductionData);
+  };
+  
+  // Handle date change
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setStatusDate(e.target.value);
+  };
+  
+  // Update status based on current selections
+  const handleUpdateStatus = () => {
+    setTableData(getTableData());
   };
   
   return (
@@ -54,6 +156,17 @@ const ProductionStatus = () => {
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row gap-4">
+            <div className="grid w-full md:w-auto gap-2">
+              <Label htmlFor="statusDate">Status Date</Label>
+              <Input
+                id="statusDate"
+                type="date"
+                value={statusDate}
+                onChange={handleDateChange}
+                className="w-full md:w-[200px]"
+              />
+            </div>
+            
             <div className="grid w-full md:w-auto gap-2">
               <Label htmlFor="processStage">Process Stage</Label>
               <Select value={selectedProcessStage} onValueChange={setSelectedProcessStage}>
@@ -95,6 +208,13 @@ const ProductionStatus = () => {
                 </SelectContent>
               </Select>
             </div>
+            
+            <div className="flex items-end">
+              <Button variant="outline" className="w-full md:w-auto" onClick={handleUpdateStatus}>
+                <ArrowRightLeft size={16} className="mr-2" />
+                Update Status
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -133,10 +253,11 @@ const ProductionStatus = () => {
                   <TableHead className="text-right">Pending</TableHead>
                   <TableHead className="text-right">Adjustments</TableHead>
                   <TableHead className="text-right">Closing Stock</TableHead>
+                  <TableHead className="text-right">Min Level</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {getTableData().map((item) => (
+                {tableData.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell>{item.id}</TableCell>
                     <TableCell>{item.name}</TableCell>
@@ -145,12 +266,21 @@ const ProductionStatus = () => {
                     <TableCell className="text-right text-green-500">{item.completed.toFixed(2)}</TableCell>
                     <TableCell className="text-right text-red-500">{item.wastage.toFixed(2)}</TableCell>
                     <TableCell className="text-right">{item.pending.toFixed(2)}</TableCell>
-                    <TableCell className="text-right">{item.adjustments.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">{(item.adjustments || 0).toFixed(2)}</TableCell>
                     <TableCell className="text-right font-medium">{item.closing.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">{item.minLevel.toFixed(2)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
+          </div>
+          
+          <div className="mt-4 text-sm text-muted-foreground space-y-2">
+            <h4 className="font-medium text-foreground">Formulas:</h4>
+            <p>Opening Stock = Balance qty available on first day of the month</p>
+            <p>Utilised = The quantity utilised by the next process (assigned in task management)</p>
+            <p>Adj+/- = Any manual adjustments, which can be entered by the user (can be negative value also)</p>
+            <p>Closing Stock = Opening Stock + Completed - Wastage + Adj(+/-)</p>
           </div>
         </CardContent>
       </Card>

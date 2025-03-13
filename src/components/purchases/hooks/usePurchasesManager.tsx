@@ -54,6 +54,7 @@ export const usePurchasesManager = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [openForm, setOpenForm] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   
   // Effect to handle initial stock updates for already received items
   useEffect(() => {
@@ -72,7 +73,15 @@ export const usePurchasesManager = () => {
         }
       });
     }
+    
+    console.log("Stock purchases initialized");
   }, []);
+  
+  // Effect to refresh data when needed
+  useEffect(() => {
+    // In a real app, would fetch from API
+    console.log("Stock purchases refreshed");
+  }, [refreshTrigger]);
 
   const handleAddNew = () => {
     setSelectedPurchase(null);
@@ -199,6 +208,7 @@ export const usePurchasesManager = () => {
       
       setIsLoading(false);
       setOpenForm(false);
+      setRefreshTrigger(prev => prev + 1);
     }, 600);
   };
 
@@ -209,6 +219,15 @@ export const usePurchasesManager = () => {
     
     // Simulate API call
     setTimeout(() => {
+      // If deleting a received purchase, remove it from stock
+      if (selectedPurchase.status === 'received' && window.stockManager) {
+        window.stockManager.updateStock(
+          selectedPurchase.materialId,
+          selectedPurchase.quantity,
+          false
+        );
+      }
+      
       setPurchases(prev => 
         prev.filter(purchase => purchase.id !== selectedPurchase.id)
       );
@@ -221,6 +240,7 @@ export const usePurchasesManager = () => {
       
       setIsLoading(false);
       setOpenDeleteDialog(false);
+      setRefreshTrigger(prev => prev + 1);
     }, 600);
   };
 
