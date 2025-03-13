@@ -48,7 +48,7 @@ const StockStatusView = () => {
       lastPurchaseDate: new Date('2023-04-20'),
       status: 'critical'
     }
-  ]);
+  ];
   
   const [statusDate, setStatusDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [stockData, setStockData] = useState([
