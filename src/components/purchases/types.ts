@@ -4,10 +4,10 @@ export interface StockItem {
   code: string;
   name: string;
   category: string;
-  currentStock: number;
-  minStockLevel: number;
+  current_stock: number;
+  min_stock_level: number;
   unit: string;
-  lastPurchaseDate: Date | null;
+  last_purchase_date: Date | null;
   status: 'normal' | 'low' | 'critical';
 }
 
@@ -29,7 +29,7 @@ declare global {
   interface Window {
     stockManager?: {
       items: StockItem[];
-      updateStock: (materialId: string, quantity: number, isAddition: boolean, purchaseDate?: Date) => void;
+      updateStock: (material_id: string, quantity: number, isAddition: boolean, purchase_date?: Date) => void;
       getStockItems: () => StockItem[];
     };
   }

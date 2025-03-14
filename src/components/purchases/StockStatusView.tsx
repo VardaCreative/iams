@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,7 +27,7 @@ const StockStatusView = () => {
         const data = await fetchStockStatus(selectedDate);
         console.log('Fetched stock status for date:', selectedDate, data);
         
-        if (data.length > 0) {
+        if (data && data.length > 0) {
           // Map database structure to frontend structure
           const mappedData = data.map(item => ({
             id: item.id,

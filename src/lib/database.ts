@@ -21,6 +21,7 @@ export const fetchVendors = async () => {
       .order('name');
       
     if (error) throw error;
+    console.log("Fetched vendors:", data);
     return data || [];
   } catch (error) {
     handleError(error, "Failed to fetch vendors");
@@ -30,6 +31,8 @@ export const fetchVendors = async () => {
 
 export const saveVendor = async (vendor: any) => {
   try {
+    console.log("Saving vendor:", vendor);
+    
     // Create a new UUID if this is a new vendor (empty ID)
     const vendorToSave = { ...vendor };
     if (!vendorToSave.id) {
@@ -44,6 +47,7 @@ export const saveVendor = async (vendor: any) => {
       
     if (error) throw error;
     
+    console.log("Vendor saved successfully:", data);
     return data;
   } catch (error) {
     handleError(error, "Failed to save vendor");
@@ -53,6 +57,8 @@ export const saveVendor = async (vendor: any) => {
 
 export const deleteVendor = async (id: string) => {
   try {
+    console.log("Deleting vendor:", id);
+    
     const { error } = await supabase
       .from('vendors')
       .delete()
@@ -60,6 +66,7 @@ export const deleteVendor = async (id: string) => {
       
     if (error) throw error;
     
+    console.log("Vendor deleted successfully");
     return true;
   } catch (error) {
     handleError(error, "Failed to delete vendor");
@@ -76,6 +83,7 @@ export const fetchRawMaterials = async () => {
       .order('name');
       
     if (error) throw error;
+    console.log("Fetched raw materials:", data);
     return data || [];
   } catch (error) {
     handleError(error, "Failed to fetch raw materials");
@@ -85,6 +93,8 @@ export const fetchRawMaterials = async () => {
 
 export const saveRawMaterial = async (material: any) => {
   try {
+    console.log("Saving raw material:", material);
+    
     // Create a new UUID if this is a new material (empty ID)
     const materialToSave = { ...material };
     if (!materialToSave.id) {
@@ -109,6 +119,7 @@ export const saveRawMaterial = async (material: any) => {
       
     if (error) throw error;
     
+    console.log("Raw material saved successfully:", data);
     return data;
   } catch (error) {
     handleError(error, "Failed to save raw material");
@@ -118,6 +129,8 @@ export const saveRawMaterial = async (material: any) => {
 
 export const deleteRawMaterial = async (id: string) => {
   try {
+    console.log("Deleting raw material:", id);
+    
     const { error } = await supabase
       .from('raw_materials')
       .delete()
@@ -125,6 +138,7 @@ export const deleteRawMaterial = async (id: string) => {
       
     if (error) throw error;
     
+    console.log("Raw material deleted successfully");
     return true;
   } catch (error) {
     handleError(error, "Failed to delete raw material");
@@ -141,6 +155,7 @@ export const fetchStockPurchases = async () => {
       .order('purchase_date', { ascending: false });
       
     if (error) throw error;
+    console.log("Fetched stock purchases:", data);
     return data || [];
   } catch (error) {
     handleError(error, "Failed to fetch stock purchases");
@@ -150,6 +165,8 @@ export const fetchStockPurchases = async () => {
 
 export const saveStockPurchase = async (purchase: any) => {
   try {
+    console.log("Saving stock purchase:", purchase);
+    
     // Convert Date to ISO string format for storage
     const purchaseToSave = { 
       ...purchase,
@@ -171,6 +188,7 @@ export const saveStockPurchase = async (purchase: any) => {
       
     if (error) throw error;
     
+    console.log("Stock purchase saved successfully:", data);
     return data;
   } catch (error) {
     handleError(error, "Failed to save stock purchase");
@@ -180,6 +198,8 @@ export const saveStockPurchase = async (purchase: any) => {
 
 export const deleteStockPurchase = async (id: string) => {
   try {
+    console.log("Deleting stock purchase:", id);
+    
     const { error } = await supabase
       .from('stock_purchases')
       .delete()
@@ -187,6 +207,7 @@ export const deleteStockPurchase = async (id: string) => {
       
     if (error) throw error;
     
+    console.log("Stock purchase deleted successfully");
     return true;
   } catch (error) {
     handleError(error, "Failed to delete stock purchase");
@@ -197,6 +218,8 @@ export const deleteStockPurchase = async (id: string) => {
 // Stock Status operations
 export const fetchStockStatus = async (date: string) => {
   try {
+    console.log("Fetching stock status for date:", date);
+    
     const { data, error } = await supabase
       .from('stock_status')
       .select('*')
@@ -204,6 +227,8 @@ export const fetchStockStatus = async (date: string) => {
       .order('name');
       
     if (error) throw error;
+    
+    console.log("Stock status fetched successfully:", data);
     return data || [];
   } catch (error) {
     handleError(error, "Failed to fetch stock status");
@@ -213,6 +238,8 @@ export const fetchStockStatus = async (date: string) => {
 
 export const saveStockStatus = async (stockData: any[]) => {
   try {
+    console.log("Saving stock status:", stockData);
+    
     // Process each item individually to handle new and existing items
     const processedData = stockData.map(item => {
       // If new item (empty ID), let Supabase generate the UUID
@@ -229,6 +256,7 @@ export const saveStockStatus = async (stockData: any[]) => {
       
     if (error) throw error;
     
+    console.log("Stock status saved successfully");
     return true;
   } catch (error) {
     handleError(error, "Failed to save stock status");
@@ -245,6 +273,7 @@ export const fetchStaff = async () => {
       .order('name');
       
     if (error) throw error;
+    console.log("Fetched staff:", data);
     return data || [];
   } catch (error) {
     handleError(error, "Failed to fetch staff");
@@ -254,6 +283,8 @@ export const fetchStaff = async () => {
 
 export const saveStaff = async (staff: any) => {
   try {
+    console.log("Saving staff member:", staff);
+    
     // Create a new UUID if this is a new staff (empty ID)
     const staffToSave = { ...staff };
     if (!staffToSave.id) {
@@ -268,6 +299,7 @@ export const saveStaff = async (staff: any) => {
       
     if (error) throw error;
     
+    console.log("Staff member saved successfully:", data);
     return data;
   } catch (error) {
     handleError(error, "Failed to save staff");
@@ -277,6 +309,8 @@ export const saveStaff = async (staff: any) => {
 
 export const deleteStaff = async (id: string) => {
   try {
+    console.log("Deleting staff member:", id);
+    
     const { error } = await supabase
       .from('staff')
       .delete()
@@ -284,6 +318,7 @@ export const deleteStaff = async (id: string) => {
       
     if (error) throw error;
     
+    console.log("Staff member deleted successfully");
     return true;
   } catch (error) {
     handleError(error, "Failed to delete staff");
@@ -300,6 +335,7 @@ export const fetchTasks = async () => {
       .order('date_assigned', { ascending: false });
       
     if (error) throw error;
+    console.log("Fetched tasks:", data);
     return data || [];
   } catch (error) {
     handleError(error, "Failed to fetch tasks");
@@ -309,6 +345,8 @@ export const fetchTasks = async () => {
 
 export const saveTask = async (task: any) => {
   try {
+    console.log("Saving task:", task);
+    
     // Create a new UUID if this is a new task (empty ID)
     const taskToSave = { ...task };
     if (!taskToSave.id) {
@@ -323,6 +361,7 @@ export const saveTask = async (task: any) => {
       
     if (error) throw error;
     
+    console.log("Task saved successfully:", data);
     return data;
   } catch (error) {
     handleError(error, "Failed to save task");
@@ -332,6 +371,8 @@ export const saveTask = async (task: any) => {
 
 export const deleteTask = async (id: string) => {
   try {
+    console.log("Deleting task:", id);
+    
     const { error } = await supabase
       .from('tasks')
       .delete()
@@ -339,6 +380,7 @@ export const deleteTask = async (id: string) => {
       
     if (error) throw error;
     
+    console.log("Task deleted successfully");
     return true;
   } catch (error) {
     handleError(error, "Failed to delete task");

@@ -44,6 +44,7 @@ const StaffManagement = () => {
       setIsLoading(true);
       try {
         const data = await fetchStaff();
+        console.log('Fetched staff data:', data);
         
         // Map database structure to frontend structure
         const mappedData = data.map(item => ({
@@ -156,6 +157,8 @@ const StaffManagement = () => {
     setIsLoading(true);
     
     try {
+      console.log('Saving staff data:', data);
+      
       // Map frontend structure to database structure
       const dbStaff = {
         id: data.id,
@@ -170,10 +173,15 @@ const StaffManagement = () => {
       };
       
       const savedStaff = await saveStaff(dbStaff);
+      console.log('Staff saved response:', savedStaff);
       
       if (savedStaff) {
         setRefreshTrigger(prev => prev + 1);
         setOpenForm(false);
+        toast({
+          title: "Staff member saved",
+          description: "Staff member has been saved successfully",
+        });
       }
     } catch (error) {
       console.error('Error saving staff:', error);
@@ -193,11 +201,16 @@ const StaffManagement = () => {
     setIsLoading(true);
     
     try {
+      console.log('Deleting staff:', selectedStaff.id);
       const success = await deleteStaff(selectedStaff.id);
       
       if (success) {
         setRefreshTrigger(prev => prev + 1);
         setOpenDeleteDialog(false);
+        toast({
+          title: "Staff member deleted",
+          description: "Staff member has been deleted successfully",
+        });
       }
     } catch (error) {
       console.error('Error deleting staff:', error);

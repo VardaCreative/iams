@@ -48,6 +48,7 @@ const TaskManagement = () => {
       setIsLoading(true);
       try {
         const data = await fetchTasks();
+        console.log('Fetched tasks data:', data);
         
         // Map database structure to frontend structure
         const mappedData = data.map(item => ({
@@ -171,6 +172,8 @@ const TaskManagement = () => {
     setIsLoading(true);
     
     try {
+      console.log('Submitting task data:', data);
+      
       // Generate a task ID if this is a new task
       if (!data.taskId) {
         data.taskId = `TASK${(tasks.length + 1).toString().padStart(3, '0')}`;
@@ -181,23 +184,32 @@ const TaskManagement = () => {
         id: data.id,
         task_id: data.taskId,
         description: data.description,
-        date_assigned: data.dateAssigned.toISOString().split('T')[0],
+        date_assigned: data.dateAssigned instanceof Date 
+          ? data.dateAssigned.toISOString().split('T')[0]
+          : data.dateAssigned,
         rm_assigned: data.rmAssigned,
         process_assigned: data.processAssigned,
         qty_assigned: data.qtyAssigned,
         staff_name: data.staffName,
-        date_completed: data.dateCompleted ? data.dateCompleted.toISOString().split('T')[0] : null,
+        date_completed: data.dateCompleted instanceof Date 
+          ? data.dateCompleted.toISOString().split('T')[0]
+          : data.dateCompleted,
         completed_qty: data.completedQty,
         wastage_qty: data.wastageQty,
         remarks: data.remarks,
         status: data.status
       };
       
+      console.log('Task data to save:', dbTask);
       const savedTask = await saveTask(dbTask);
       
       if (savedTask) {
         setRefreshTrigger(prev => prev + 1);
         setOpenForm(false);
+        toast({
+          title: "Task saved",
+          description: "Task has been saved successfully",
+        });
       }
     } catch (error) {
       console.error('Error saving task:', error);
@@ -217,11 +229,16 @@ const TaskManagement = () => {
     setIsLoading(true);
     
     try {
+      console.log('Deleting task:', selectedTask.id);
       const success = await deleteTask(selectedTask.id);
       
       if (success) {
         setRefreshTrigger(prev => prev + 1);
         setOpenDeleteDialog(false);
+        toast({
+          title: "Task deleted",
+          description: "Task has been deleted successfully",
+        });
       }
     } catch (error) {
       console.error('Error deleting task:', error);

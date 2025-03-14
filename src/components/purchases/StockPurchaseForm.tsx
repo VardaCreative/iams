@@ -49,14 +49,38 @@ const StockPurchaseForm = ({
     quantity: 0,
     unit_price: 0,
     status: 'ordered',
-    ...(initialData && {
-      ...initialData,
-      // Convert string date to Date object if needed
-      purchase_date: initialData.purchase_date instanceof Date 
-        ? initialData.purchase_date 
-        : new Date(initialData.purchase_date)
-    })
   });
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        id: initialData.id,
+        purchase_date: initialData.purchase_date instanceof Date 
+          ? initialData.purchase_date 
+          : new Date(initialData.purchase_date),
+        vendor_id: initialData.vendor_id,
+        purchase_order: initialData.purchase_order,
+        invoice: initialData.invoice,
+        material_id: initialData.material_id,
+        quantity: initialData.quantity,
+        unit_price: initialData.unit_price,
+        status: initialData.status,
+      });
+    } else {
+      // Reset form for new entry
+      setFormData({
+        id: '',
+        purchase_date: new Date(),
+        vendor_id: vendors.length > 0 ? vendors[0].id : '',
+        purchase_order: '',
+        invoice: '',
+        material_id: materials.length > 0 ? materials[0].id : '',
+        quantity: 0,
+        unit_price: 0,
+        status: 'ordered',
+      });
+    }
+  }, [initialData, open, vendors, materials]);
 
   // Update unit price when material changes
   useEffect(() => {
@@ -93,13 +117,14 @@ const StockPurchaseForm = ({
     const material = materials.find(m => m.id === formData.material_id);
     
     const completeData: StockPurchase = {
-      ...formData as any,
+      ...formData,
       vendor_name: vendor?.name || 'Unknown Vendor',
       material_name: material?.name || 'Unknown Material',
       unit: material?.unit || 'unit',
       total_amount: formData.quantity * formData.unit_price
     };
     
+    console.log("Submitting purchase form data:", completeData);
     onSubmit(completeData);
   };
 

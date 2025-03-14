@@ -37,10 +37,10 @@ export const useStockManager = (initialStockItems: StockItem[]) => {
             code: item.code,
             name: item.name,
             category: item.category,
-            currentStock: item.current_stock,
-            minStockLevel: item.min_stock_level,
+            current_stock: item.current_stock,
+            min_stock_level: item.min_stock_level,
             unit: item.unit,
-            lastPurchaseDate: new Date(item.last_purchase_date),
+            last_purchase_date: new Date(item.last_purchase_date),
             status: 'normal' // Will be updated by updateStockStatus
           }));
           
@@ -65,7 +65,7 @@ export const useStockManager = (initialStockItems: StockItem[]) => {
     // For now, just use the initial data and update status
     const updatedItems = updateStockStatus(initialStockItems);
     setStockItems(updatedItems);
-  }, []);
+  }, [initialStockItems]);
   
   useEffect(() => {
     // Filter items based on search term
@@ -91,13 +91,13 @@ export const useStockManager = (initialStockItems: StockItem[]) => {
   };
   
   // Update stock status based on current stock vs min stock level
-  const updateStockStatus = (stockItems: StockItem[]): StockItem[] => {
-    return stockItems.map(item => {
+  const updateStockStatus = (items: StockItem[]): StockItem[] => {
+    return items.map(item => {
       let status: 'normal' | 'low' | 'critical' = 'normal';
       
-      if (item.currentStock <= item.minStockLevel * 0.3) {
+      if (item.current_stock <= item.min_stock_level * 0.3) {
         status = 'critical';
-      } else if (item.currentStock <= item.minStockLevel) {
+      } else if (item.current_stock <= item.min_stock_level) {
         status = 'low';
       }
       
@@ -119,13 +119,13 @@ export const useStockManager = (initialStockItems: StockItem[]) => {
           const updatedItem = { ...item, ...updates };
           
           // Automatically update status based on stock level
-          if (updates.currentStock !== undefined || updates.minStockLevel !== undefined) {
-            const currentStock = updates.currentStock ?? item.currentStock;
-            const minLevel = updates.minStockLevel ?? item.minStockLevel;
+          if (updates.current_stock !== undefined || updates.min_stock_level !== undefined) {
+            const current_stock = updates.current_stock ?? item.current_stock;
+            const min_level = updates.min_stock_level ?? item.min_stock_level;
             
-            if (currentStock <= minLevel * 0.3) {
+            if (current_stock <= min_level * 0.3) {
               updatedItem.status = 'critical';
-            } else if (currentStock <= minLevel) {
+            } else if (current_stock <= min_level) {
               updatedItem.status = 'low';
             } else {
               updatedItem.status = 'normal';
@@ -151,10 +151,10 @@ export const useStockManager = (initialStockItems: StockItem[]) => {
         .update({
           name: updates.name ?? item.name,
           category: updates.category ?? item.category,
-          current_stock: updates.currentStock ?? item.currentStock,
-          min_stock_level: updates.minStockLevel ?? item.minStockLevel,
+          current_stock: updates.current_stock ?? item.current_stock,
+          min_stock_level: updates.min_stock_level ?? item.min_stock_level,
           unit: updates.unit ?? item.unit,
-          last_purchase_date: updates.lastPurchaseDate ?? item.lastPurchaseDate,
+          last_purchase_date: updates.last_purchase_date ?? item.last_purchase_date,
           status: updates.status ?? item.status
         })
         .eq('id', itemId);
@@ -172,9 +172,6 @@ export const useStockManager = (initialStockItems: StockItem[]) => {
         description: "Please try again later",
         variant: "destructive"
       });
-      
-      // Revert to previous state on error
-      // ... code to revert state ...
     }
     */
     
@@ -192,26 +189,26 @@ export const useStockManager = (initialStockItems: StockItem[]) => {
     // Make the stock items and methods available globally
     window.stockManager = {
       items: stockItems,
-      updateStock: (materialId: string, quantity: number, isAddition: boolean, purchaseDate?: Date) => {
+      updateStock: (material_id: string, quantity: number, isAddition: boolean, purchase_date?: Date) => {
         setStockItems(prevItems => {
           const updatedItems = prevItems.map(item => {
-            if (item.id === materialId) {
+            if (item.id === material_id) {
               const newStock = isAddition 
-                ? item.currentStock + quantity 
-                : Math.max(0, item.currentStock - quantity);
+                ? item.current_stock + quantity 
+                : Math.max(0, item.current_stock - quantity);
                 
               let newStatus: 'normal' | 'low' | 'critical' = 'normal';
               
-              if (newStock <= item.minStockLevel * 0.3) {
+              if (newStock <= item.min_stock_level * 0.3) {
                 newStatus = 'critical';
-              } else if (newStock <= item.minStockLevel) {
+              } else if (newStock <= item.min_stock_level) {
                 newStatus = 'low';
               }
               
               return {
                 ...item,
-                currentStock: newStock,
-                lastPurchaseDate: isAddition && purchaseDate ? purchaseDate : item.lastPurchaseDate,
+                current_stock: newStock,
+                last_purchase_date: isAddition && purchase_date ? purchase_date : item.last_purchase_date,
                 status: newStatus
               };
             }
@@ -220,16 +217,16 @@ export const useStockManager = (initialStockItems: StockItem[]) => {
           
           // In a real implementation, you would save to Supabase:
           /*
-          const item = updatedItems.find(item => item.id === materialId);
+          const item = updatedItems.find(item => item.id === material_id);
           if (item) {
             supabase
               .from('raw_materials')
               .update({
-                current_stock: item.currentStock,
-                last_purchase_date: item.lastPurchaseDate,
+                current_stock: item.current_stock,
+                last_purchase_date: item.last_purchase_date,
                 status: item.status
               })
-              .eq('id', materialId)
+              .eq('id', material_id)
               .then(({ error }) => {
                 if (error) {
                   console.error('Error updating stock:', error);

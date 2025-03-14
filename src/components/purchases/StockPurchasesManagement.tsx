@@ -113,12 +113,20 @@ const StockPurchasesManagement = () => {
   };
 
   const handleSubmit = async (data: StockPurchase) => {
+    console.log('Submitting purchase data:', data);
     setIsLoading(true);
     
     try {
-      console.log('Submitting stock purchase data:', data);
+      // Ensure purchase_date is formatted correctly for database
+      const purchaseToSave = {
+        ...data,
+        purchase_date: data.purchase_date instanceof Date 
+          ? data.purchase_date.toISOString().split('T')[0]
+          : data.purchase_date
+      };
       
-      const savedPurchase = await saveStockPurchase(data);
+      console.log('Purchase data to save:', purchaseToSave);
+      const savedPurchase = await saveStockPurchase(purchaseToSave);
       
       if (savedPurchase) {
         // Update stock if purchase is received or status changed
