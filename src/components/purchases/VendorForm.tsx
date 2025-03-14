@@ -7,7 +7,7 @@ import FormDialog from "@/components/common/FormDialog";
 export interface Vendor {
   id: string;
   name: string;
-  contactPerson: string;
+  contact_person: string;
   email: string;
   phone: string;
   address: string;
@@ -33,7 +33,7 @@ const VendorForm = ({
   const [formData, setFormData] = React.useState<Vendor>({
     id: '',
     name: '',
-    contactPerson: '',
+    contact_person: '',
     email: '',
     phone: '',
     address: '',
@@ -75,11 +75,11 @@ const VendorForm = ({
         </div>
         
         <div className="grid gap-2">
-          <Label htmlFor="contactPerson">Contact Person *</Label>
+          <Label htmlFor="contact_person">Contact Person *</Label>
           <Input
-            id="contactPerson"
-            name="contactPerson"
-            value={formData.contactPerson}
+            id="contact_person"
+            name="contact_person"
+            value={formData.contact_person}
             onChange={handleChange}
             placeholder="Primary contact name"
             required

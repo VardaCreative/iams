@@ -31,6 +31,7 @@ const VendorManagement = () => {
       setIsLoading(true);
       try {
         const data = await fetchVendors();
+        console.log('Fetched vendors:', data);
         setVendors(data);
       } catch (error) {
         console.error('Error loading vendors:', error);
@@ -113,11 +114,16 @@ const VendorManagement = () => {
     setIsLoading(true);
     
     try {
+      console.log('Submitting vendor data:', data);
       const savedVendor = await saveVendor(data);
       
       if (savedVendor) {
         setRefreshTrigger(prev => prev + 1);
         setOpenForm(false);
+        toast({
+          title: "Vendor saved",
+          description: `${data.name} has been saved successfully`,
+        });
       }
     } catch (error) {
       console.error('Error saving vendor:', error);
@@ -137,11 +143,16 @@ const VendorManagement = () => {
     setIsLoading(true);
     
     try {
+      console.log('Deleting vendor:', selectedVendor.id);
       const success = await deleteVendor(selectedVendor.id);
       
       if (success) {
         setRefreshTrigger(prev => prev + 1);
         setOpenDeleteDialog(false);
+        toast({
+          title: "Vendor deleted",
+          description: "Vendor has been deleted successfully",
+        });
       }
     } catch (error) {
       console.error('Error deleting vendor:', error);

@@ -14,12 +14,12 @@ export interface StockItem {
   id: string;
   name: string;
   category: string;
-  openingBal: number;
+  opening_bal: number;
   purchases: number;
   utilised: number;
-  adjPlus: number;
-  closingBal: number;
-  minLevel: number;
+  adj_plus: number;
+  closing_bal: number;
+  min_level: number;
   status: 'Normal' | 'Low Stock' | 'Out of Stock';
 }
 
@@ -37,6 +37,7 @@ const StockStatusView = () => {
       try {
         // Fetch stock status for the selected date
         const data = await fetchStockStatus(selectedDate);
+        console.log('Fetched stock status for date:', selectedDate, data);
         
         if (data.length > 0) {
           // Map database structure to frontend structure
@@ -44,28 +45,29 @@ const StockStatusView = () => {
             id: item.id,
             name: item.name,
             category: item.category,
-            openingBal: item.opening_bal,
+            opening_bal: item.opening_bal,
             purchases: item.purchases,
             utilised: item.utilised,
-            adjPlus: item.adj_plus,
-            closingBal: item.closing_bal,
-            minLevel: item.min_level,
+            adj_plus: item.adj_plus,
+            closing_bal: item.closing_bal,
+            min_level: item.min_level,
             status: item.status as 'Normal' | 'Low Stock' | 'Out of Stock'
           }));
           setStockItems(mappedData);
         } else {
           // If no data for the selected date, initialize with raw materials
           const materials = await fetchRawMaterials();
+          console.log('No stock data found, initializing with raw materials:', materials);
           const initialItems = materials.map(material => ({
             id: '', // New items will get IDs from the database
             name: material.name,
             category: material.category,
-            openingBal: 0,
+            opening_bal: 0,
             purchases: 0,
             utilised: 0,
-            adjPlus: 0,
-            closingBal: 0,
-            minLevel: material.minStockLevel,
+            adj_plus: 0,
+            closing_bal: 0,
+            min_level: material.min_stock_level,
             status: 'Normal' as 'Normal' | 'Low Stock' | 'Out of Stock'
           }));
           setStockItems(initialItems);
@@ -106,13 +108,13 @@ const StockStatusView = () => {
       // Calculate closing balance and update status for each item
       const updatedItems = stockItems.map(item => {
         // Formula: Closing Balance = Opening Balance + Purchases - Utilised + Adj+/-
-        const closingBal = item.openingBal + item.purchases - item.utilised + item.adjPlus;
+        const closing_bal = item.opening_bal + item.purchases - item.utilised + item.adj_plus;
         
         // Determine status based on closing balance and minimum level
         let status: 'Normal' | 'Low Stock' | 'Out of Stock';
-        if (closingBal <= 0) {
+        if (closing_bal <= 0) {
           status = 'Out of Stock';
-        } else if (closingBal < item.minLevel) {
+        } else if (closing_bal < item.min_level) {
           status = 'Low Stock';
         } else {
           status = 'Normal';
@@ -120,30 +122,29 @@ const StockStatusView = () => {
         
         return {
           ...item,
-          closingBal,
+          closing_bal,
           status
         };
       });
       
       // Update the state with calculated values
       setStockItems(updatedItems);
+      console.log('Saving calculated stock status:', updatedItems);
       
-      // Map frontend structure to database structure
-      const dbItems = updatedItems.map(item => ({
+      // Save the updated stock status to the database
+      const success = await saveStockStatus(updatedItems.map(item => ({
         id: item.id,
         date: selectedDate,
         name: item.name,
         category: item.category,
-        opening_bal: item.openingBal,
+        opening_bal: item.opening_bal,
         purchases: item.purchases,
         utilised: item.utilised,
-        adj_plus: item.adjPlus,
-        closing_bal: item.closingBal,
-        min_level: item.minLevel,
+        adj_plus: item.adj_plus,
+        closing_bal: item.closing_bal,
+        min_level: item.min_level,
         status: item.status
-      }));
-      
-      const success = await saveStockStatus(dbItems);
+      })));
       
       if (success) {
         toast({
@@ -168,7 +169,7 @@ const StockStatusView = () => {
   const handleAdjustmentChange = (id: string, value: number) => {
     setStockItems(prevItems =>
       prevItems.map(item =>
-        item.id === id ? { ...item, adjPlus: value } : item
+        item.id === id ? { ...item, adj_plus: value } : item
       )
     );
   };
@@ -176,7 +177,7 @@ const StockStatusView = () => {
   const handleMinLevelChange = (id: string, value: number) => {
     setStockItems(prevItems =>
       prevItems.map(item =>
-        item.id === id ? { ...item, minLevel: value } : item
+        item.id === id ? { ...item, min_level: value } : item
       )
     );
   };

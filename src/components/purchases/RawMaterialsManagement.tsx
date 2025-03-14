@@ -31,6 +31,7 @@ const RawMaterialsManagement = () => {
       setIsLoading(true);
       try {
         const data = await fetchRawMaterials();
+        console.log('Fetched raw materials:', data);
         setMaterials(data);
       } catch (error) {
         console.error('Error loading materials:', error);
@@ -57,13 +58,8 @@ const RawMaterialsManagement = () => {
       cell: (value: string) => value.toUpperCase()
     },
     { 
-      header: "Unit Price", 
-      accessorKey: "unitPrice",
-      cell: (value: number) => `₹${value.toFixed(2)}`
-    },
-    { 
       header: "Min. Stock", 
-      accessorKey: "minStockLevel",
+      accessorKey: "min_stock_level",
       cell: (value: number, row: RawMaterial) => `${value} ${row.unit.toUpperCase()}`
     },
     { 
@@ -126,24 +122,16 @@ const RawMaterialsManagement = () => {
     setIsLoading(true);
     
     try {
-      // Map frontend data structure to database structure
-      const dbMaterial = {
-        id: data.id,
-        code: data.code,
-        name: data.name,
-        category: data.category,
-        description: data.description,
-        unit: data.unit,
-        unit_price: data.unitPrice,
-        min_stock_level: data.minStockLevel,
-        status: data.status
-      };
-      
-      const savedMaterial = await saveRawMaterial(dbMaterial);
+      console.log('Submitting raw material data:', data);
+      const savedMaterial = await saveRawMaterial(data);
       
       if (savedMaterial) {
         setRefreshTrigger(prev => prev + 1);
         setOpenForm(false);
+        toast({
+          title: "Raw material saved",
+          description: `${data.name} has been saved successfully`,
+        });
       }
     } catch (error) {
       console.error('Error saving material:', error);
@@ -163,11 +151,16 @@ const RawMaterialsManagement = () => {
     setIsLoading(true);
     
     try {
+      console.log('Deleting raw material:', selectedMaterial.id);
       const success = await deleteRawMaterial(selectedMaterial.id);
       
       if (success) {
         setRefreshTrigger(prev => prev + 1);
         setOpenDeleteDialog(false);
+        toast({
+          title: "Raw material deleted",
+          description: "Raw material has been deleted successfully",
+        });
       }
     } catch (error) {
       console.error('Error deleting material:', error);

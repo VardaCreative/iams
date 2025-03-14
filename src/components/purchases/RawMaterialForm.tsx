@@ -11,8 +11,7 @@ export interface RawMaterial {
   category: string;
   description?: string;
   unit: string;
-  unitPrice: number;
-  minStockLevel: number;
+  min_stock_level: number;
   status: 'active' | 'inactive';
 }
 
@@ -38,8 +37,7 @@ const RawMaterialForm = ({
     category: '',
     description: '',
     unit: 'kg',
-    unitPrice: 0,
-    minStockLevel: 0,
+    min_stock_level: 0,
     status: 'active',
     ...initialData
   });
@@ -143,13 +141,13 @@ const RawMaterialForm = ({
           </div>
           
           <div className="grid gap-2">
-            <Label htmlFor="minStockLevel">Min. Stock Level *</Label>
+            <Label htmlFor="min_stock_level">Min. Stock Level *</Label>
             <Input
-              id="minStockLevel"
-              name="minStockLevel"
+              id="min_stock_level"
+              name="min_stock_level"
               type="number"
               min="0"
-              value={formData.minStockLevel}
+              value={formData.min_stock_level}
               onChange={handleChange}
               required
             />
@@ -170,9 +168,6 @@ const RawMaterialForm = ({
             <option value="inactive">Inactive</option>
           </select>
         </div>
-
-        {/* Unit Price is hidden but still maintained in the form data */}
-        <input type="hidden" name="unitPrice" value={formData.unitPrice} />
       </div>
     </FormDialog>
   );

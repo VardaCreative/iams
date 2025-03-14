@@ -1,5 +1,5 @@
 
-import { supabase } from './supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from "@/hooks/use-toast";
 
 // Generic error handler
@@ -30,18 +30,19 @@ export const fetchVendors = async () => {
 
 export const saveVendor = async (vendor: any) => {
   try {
+    // Create a new UUID if this is a new vendor (empty ID)
+    const vendorToSave = { ...vendor };
+    if (!vendorToSave.id) {
+      delete vendorToSave.id; // Let Supabase generate the UUID
+    }
+    
     const { data, error } = await supabase
       .from('vendors')
-      .upsert(vendor, { onConflict: 'id' })
+      .upsert(vendorToSave)
       .select()
       .single();
       
     if (error) throw error;
-    
-    toast({
-      title: "Vendor saved",
-      description: `${vendor.name} has been saved successfully`,
-    });
     
     return data;
   } catch (error) {
@@ -58,11 +59,6 @@ export const deleteVendor = async (id: string) => {
       .eq('id', id);
       
     if (error) throw error;
-    
-    toast({
-      title: "Vendor deleted",
-      description: "Vendor has been deleted successfully",
-    });
     
     return true;
   } catch (error) {
@@ -89,18 +85,29 @@ export const fetchRawMaterials = async () => {
 
 export const saveRawMaterial = async (material: any) => {
   try {
+    // Create a new UUID if this is a new material (empty ID)
+    const materialToSave = { ...material };
+    if (!materialToSave.id) {
+      delete materialToSave.id; // Let Supabase generate the UUID
+    }
+    
+    // Add default unit_price if not provided
+    if (materialToSave.unit_price === undefined) {
+      materialToSave.unit_price = 0;
+    }
+    
+    // Add default current_stock if not provided
+    if (materialToSave.current_stock === undefined) {
+      materialToSave.current_stock = 0;
+    }
+    
     const { data, error } = await supabase
       .from('raw_materials')
-      .upsert(material, { onConflict: 'id' })
+      .upsert(materialToSave)
       .select()
       .single();
       
     if (error) throw error;
-    
-    toast({
-      title: "Raw material saved",
-      description: `${material.name} has been saved successfully`,
-    });
     
     return data;
   } catch (error) {
@@ -117,11 +124,6 @@ export const deleteRawMaterial = async (id: string) => {
       .eq('id', id);
       
     if (error) throw error;
-    
-    toast({
-      title: "Raw material deleted",
-      description: "Raw material has been deleted successfully",
-    });
     
     return true;
   } catch (error) {
@@ -148,18 +150,26 @@ export const fetchStockPurchases = async () => {
 
 export const saveStockPurchase = async (purchase: any) => {
   try {
+    // Convert Date to ISO string format for storage
+    const purchaseToSave = { 
+      ...purchase,
+      purchase_date: purchase.purchase_date instanceof Date
+        ? purchase.purchase_date.toISOString().split('T')[0]
+        : purchase.purchase_date
+    };
+    
+    // Create a new UUID if this is a new purchase (empty ID)
+    if (!purchaseToSave.id) {
+      delete purchaseToSave.id; // Let Supabase generate the UUID
+    }
+    
     const { data, error } = await supabase
       .from('stock_purchases')
-      .upsert(purchase, { onConflict: 'id' })
+      .upsert(purchaseToSave)
       .select()
       .single();
       
     if (error) throw error;
-    
-    toast({
-      title: "Stock purchase saved",
-      description: `Purchase order ${purchase.purchase_order} has been saved successfully`,
-    });
     
     return data;
   } catch (error) {
@@ -176,11 +186,6 @@ export const deleteStockPurchase = async (id: string) => {
       .eq('id', id);
       
     if (error) throw error;
-    
-    toast({
-      title: "Stock purchase deleted",
-      description: "Stock purchase has been deleted successfully",
-    });
     
     return true;
   } catch (error) {
@@ -208,16 +213,21 @@ export const fetchStockStatus = async (date: string) => {
 
 export const saveStockStatus = async (stockData: any[]) => {
   try {
+    // Process each item individually to handle new and existing items
+    const processedData = stockData.map(item => {
+      // If new item (empty ID), let Supabase generate the UUID
+      if (!item.id) {
+        const { id, ...restItem } = item;
+        return restItem;
+      }
+      return item;
+    });
+    
     const { data, error } = await supabase
       .from('stock_status')
-      .upsert(stockData, { onConflict: 'date,name' });
+      .upsert(processedData);
       
     if (error) throw error;
-    
-    toast({
-      title: "Stock status saved",
-      description: "Stock status has been updated successfully",
-    });
     
     return true;
   } catch (error) {
@@ -244,18 +254,19 @@ export const fetchStaff = async () => {
 
 export const saveStaff = async (staff: any) => {
   try {
+    // Create a new UUID if this is a new staff (empty ID)
+    const staffToSave = { ...staff };
+    if (!staffToSave.id) {
+      delete staffToSave.id; // Let Supabase generate the UUID
+    }
+    
     const { data, error } = await supabase
       .from('staff')
-      .upsert(staff, { onConflict: 'id' })
+      .upsert(staffToSave)
       .select()
       .single();
       
     if (error) throw error;
-    
-    toast({
-      title: "Staff saved",
-      description: `${staff.name} has been saved successfully`,
-    });
     
     return data;
   } catch (error) {
@@ -272,11 +283,6 @@ export const deleteStaff = async (id: string) => {
       .eq('id', id);
       
     if (error) throw error;
-    
-    toast({
-      title: "Staff deleted",
-      description: "Staff has been deleted successfully",
-    });
     
     return true;
   } catch (error) {
@@ -303,18 +309,19 @@ export const fetchTasks = async () => {
 
 export const saveTask = async (task: any) => {
   try {
+    // Create a new UUID if this is a new task (empty ID)
+    const taskToSave = { ...task };
+    if (!taskToSave.id) {
+      delete taskToSave.id; // Let Supabase generate the UUID
+    }
+    
     const { data, error } = await supabase
       .from('tasks')
-      .upsert(task, { onConflict: 'id' })
+      .upsert(taskToSave)
       .select()
       .single();
       
     if (error) throw error;
-    
-    toast({
-      title: "Task saved",
-      description: `Task ${task.task_id} has been saved successfully`,
-    });
     
     return data;
   } catch (error) {
@@ -331,11 +338,6 @@ export const deleteTask = async (id: string) => {
       .eq('id', id);
       
     if (error) throw error;
-    
-    toast({
-      title: "Task deleted",
-      description: "Task has been deleted successfully",
-    });
     
     return true;
   } catch (error) {
@@ -366,16 +368,21 @@ export const fetchProductionStatus = async (params: { date: string, stage: strin
 
 export const saveProductionStatus = async (productionData: any[]) => {
   try {
+    // Process each item individually to handle new and existing items
+    const processedData = productionData.map(item => {
+      // If new item (empty ID), let Supabase generate the UUID
+      if (!item.id) {
+        const { id, ...restItem } = item;
+        return restItem;
+      }
+      return item;
+    });
+    
     const { data, error } = await supabase
       .from('production_status')
-      .upsert(productionData, { onConflict: 'date,process_stage,process,month,name' });
+      .upsert(processedData);
       
     if (error) throw error;
-    
-    toast({
-      title: "Production status saved",
-      description: "Production status has been updated successfully",
-    });
     
     return true;
   } catch (error) {

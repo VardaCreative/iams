@@ -10,24 +10,24 @@ import { fetchVendors, fetchRawMaterials, fetchStockPurchases, saveStockPurchase
 
 export interface StockPurchase {
   id: string;
-  purchaseDate: Date;
-  vendorId: string;
-  vendorName: string;
-  purchaseOrder: string;
+  purchase_date: Date;
+  vendor_id: string;
+  vendor_name: string;
+  purchase_order: string;
   invoice?: string;
-  materialId: string;
-  materialName: string;
+  material_id: string;
+  material_name: string;
   quantity: number;
   unit: string;
-  unitPrice: number;
-  totalAmount: number;
+  unit_price: number;
+  total_amount: number;
   status: 'ordered' | 'received' | 'cancelled';
 }
 
 const StockPurchasesManagement = () => {
   const [purchases, setPurchases] = useState<StockPurchase[]>([]);
   const [vendors, setVendors] = useState<{id: string; name: string}[]>([]);
-  const [materials, setMaterials] = useState<{id: string; name: string; unit: string; unitPrice: number}[]>([]);
+  const [materials, setMaterials] = useState<{id: string; name: string; unit: string; unit_price: number}[]>([]);
   const [openForm, setOpenForm] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedPurchase, setSelectedPurchase] = useState<StockPurchase | null>(null);
@@ -41,32 +41,35 @@ const StockPurchasesManagement = () => {
       try {
         // Fetch vendors for dropdown
         const vendorsData = await fetchVendors();
+        console.log('Fetched vendors for dropdown:', vendorsData);
         setVendors(vendorsData.map(v => ({ id: v.id, name: v.name })));
         
         // Fetch raw materials for dropdown
         const materialsData = await fetchRawMaterials();
+        console.log('Fetched materials for dropdown:', materialsData);
         setMaterials(materialsData.map(m => ({ 
           id: m.id, 
           name: m.name, 
           unit: m.unit, 
-          unitPrice: m.unitPrice 
+          unit_price: m.unit_price || 0
         })));
         
         // Fetch stock purchases
         const purchasesData = await fetchStockPurchases();
+        console.log('Fetched stock purchases:', purchasesData);
         setPurchases(purchasesData.map(p => ({
           ...p,
-          purchaseDate: new Date(p.purchase_date),
-          vendorId: p.vendor_id || '',
-          vendorName: p.vendor_name,
-          purchaseOrder: p.purchase_order,
+          purchase_date: new Date(p.purchase_date),
+          vendor_id: p.vendor_id || '',
+          vendor_name: p.vendor_name,
+          purchase_order: p.purchase_order,
           invoice: p.invoice,
-          materialId: p.material_id || '',
-          materialName: p.material_name,
+          material_id: p.material_id || '',
+          material_name: p.material_name,
           quantity: p.quantity,
           unit: p.unit,
-          unitPrice: p.unit_price,
-          totalAmount: p.total_amount,
+          unit_price: p.unit_price,
+          total_amount: p.total_amount,
           status: p.status as 'ordered' | 'received' | 'cancelled'
         })));
         
@@ -113,24 +116,9 @@ const StockPurchasesManagement = () => {
     setIsLoading(true);
     
     try {
-      // Map frontend data structure to database structure
-      const dbPurchase = {
-        id: data.id,
-        purchase_date: data.purchaseDate.toISOString().split('T')[0],
-        vendor_id: data.vendorId,
-        vendor_name: data.vendorName,
-        purchase_order: data.purchaseOrder,
-        invoice: data.invoice,
-        material_id: data.materialId,
-        material_name: data.materialName,
-        quantity: data.quantity,
-        unit: data.unit,
-        unit_price: data.unitPrice,
-        total_amount: data.totalAmount,
-        status: data.status
-      };
+      console.log('Submitting stock purchase data:', data);
       
-      const savedPurchase = await saveStockPurchase(dbPurchase);
+      const savedPurchase = await saveStockPurchase(data);
       
       if (savedPurchase) {
         // Update stock if purchase is received or status changed
@@ -140,16 +128,16 @@ const StockPurchasesManagement = () => {
             // If status changed from something else to 'received', increase stock
             if (selectedPurchase.status !== 'received' && data.status === 'received') {
               stockManager.updateStock(
-                data.materialId, 
+                data.material_id, 
                 data.quantity, 
                 true, 
-                data.purchaseDate
+                data.purchase_date
               );
             } 
             // If status changed from 'received' to something else, decrease stock
             else if (selectedPurchase.status === 'received' && data.status !== 'received') {
               stockManager.updateStock(
-                selectedPurchase.materialId, 
+                selectedPurchase.material_id, 
                 selectedPurchase.quantity, 
                 false
               );
@@ -159,31 +147,35 @@ const StockPurchasesManagement = () => {
               selectedPurchase.quantity !== data.quantity) {
               // First remove old quantity
               stockManager.updateStock(
-                selectedPurchase.materialId, 
+                selectedPurchase.material_id, 
                 selectedPurchase.quantity, 
                 false
               );
               // Then add new quantity
               stockManager.updateStock(
-                data.materialId, 
+                data.material_id, 
                 data.quantity, 
                 true, 
-                data.purchaseDate
+                data.purchase_date
               );
             }
           } else if (data.status === 'received') {
             // New purchase marked as received
             stockManager.updateStock(
-              data.materialId,
+              data.material_id,
               data.quantity,
               true,
-              data.purchaseDate
+              data.purchase_date
             );
           }
         }
         
         setRefreshTrigger(prev => prev + 1);
         setOpenForm(false);
+        toast({
+          title: "Stock purchase saved",
+          description: `Purchase order ${data.purchase_order} has been saved successfully`,
+        });
       }
     } catch (error) {
       console.error('Error saving purchase:', error);
@@ -203,13 +195,14 @@ const StockPurchasesManagement = () => {
     setIsLoading(true);
     
     try {
+      console.log('Deleting purchase:', selectedPurchase.id);
       const success = await deleteStockPurchase(selectedPurchase.id);
       
       if (success) {
         // If deleting a received purchase, remove it from stock
         if (selectedPurchase.status === 'received' && window.stockManager) {
           window.stockManager.updateStock(
-            selectedPurchase.materialId,
+            selectedPurchase.material_id,
             selectedPurchase.quantity,
             false
           );
@@ -217,6 +210,10 @@ const StockPurchasesManagement = () => {
         
         setRefreshTrigger(prev => prev + 1);
         setOpenDeleteDialog(false);
+        toast({
+          title: "Stock purchase deleted",
+          description: "Stock purchase has been deleted successfully",
+        });
       }
     } catch (error) {
       console.error('Error deleting purchase:', error);
