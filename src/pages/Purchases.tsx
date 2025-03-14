@@ -67,27 +67,27 @@ const Purchases = () => {
             <TabsTrigger value="stock-status">Stock Status</TabsTrigger>
           </TabsList>
           
-          {/* Conditionally render tabs but ensure they're all mounted when active */}
+          {/* Fix the forceMount property to use conditional rendering */}
           <div className={activeTab === 'vendors' ? '' : 'hidden'}>
-            <TabsContent value="vendors" forceMount={activeTab === 'vendors'} className="mt-6">
+            <TabsContent value="vendors" forceMount className="mt-6">
               <VendorManagement />
             </TabsContent>
           </div>
           
           <div className={activeTab === 'raw-materials' ? '' : 'hidden'}>
-            <TabsContent value="raw-materials" forceMount={activeTab === 'raw-materials'} className="mt-6">
+            <TabsContent value="raw-materials" forceMount className="mt-6">
               <RawMaterialsManagement />
             </TabsContent>
           </div>
           
           <div className={activeTab === 'stock-purchases' ? '' : 'hidden'}>
-            <TabsContent value="stock-purchases" forceMount={activeTab === 'stock-purchases'} className="mt-6">
+            <TabsContent value="stock-purchases" forceMount className="mt-6">
               <StockPurchasesManagement />
             </TabsContent>
           </div>
           
           <div className={activeTab === 'stock-status' ? '' : 'hidden'}>
-            <TabsContent value="stock-status" forceMount={activeTab === 'stock-status'} className="mt-6">
+            <TabsContent value="stock-status" forceMount className="mt-6">
               <StockStatusView />
             </TabsContent>
           </div>

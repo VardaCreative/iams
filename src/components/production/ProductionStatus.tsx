@@ -15,8 +15,24 @@ const months = ["Jan-24", "Feb-24", "Mar-24", "Apr-24"];
 const processStages = ["Pre-Prod", "Production"];
 const processes = ["Cleaning", "Grinding", "Packing"];
 
+// Updated interface to include status
+interface ProductionItem {
+  id: string;
+  name: string;
+  category: string;
+  opening: number;
+  assigned: number;
+  completed: number;
+  wastage: number;
+  pending: number;
+  adjustments: number;
+  closing: number;
+  minLevel: number;
+  status?: string; // Add status property
+}
+
 // Sample data structure to match the required format
-const initialPreProductionData = [
+const initialPreProductionData: ProductionItem[] = [
   { 
     id: "RM1", 
     name: "Red Chilli", 
@@ -63,7 +79,7 @@ const ProductionStatus = () => {
   const [selectedProcessStage, setSelectedProcessStage] = useState("Pre-Prod");
   const [selectedProcess, setSelectedProcess] = useState("Cleaning");
   const [statusDate, setStatusDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [tableData, setTableData] = useState(initialPreProductionData);
+  const [tableData, setTableData] = useState<ProductionItem[]>(initialPreProductionData);
   const [isLoading, setIsLoading] = useState(false);
   
   // Process data and apply the formulas according to the requirements
@@ -112,7 +128,7 @@ const ProductionStatus = () => {
   };
   
   // Get the appropriate data based on process selection
-  const getDataByProcessType = () => {
+  const getDataByProcessType = (): ProductionItem[] => {
     if (selectedProcessStage === "Pre-Prod") {
       return initialPreProductionData;
     } else if (selectedProcess === "Grinding") {
@@ -178,7 +194,7 @@ const ProductionStatus = () => {
   };
   
   // Apply formulas to the data as per requirements
-  const processData = (data: any[]) => {
+  const processData = (data: ProductionItem[]): ProductionItem[] => {
     return data.map(item => {
       // Formula as specified in the image: 
       // Closing Stock = Opening stock + Completed - Wastage + Adj(+/-)
@@ -423,7 +439,7 @@ const ProductionStatus = () => {
                                 ? 'bg-red-100 text-red-800' 
                                 : 'bg-green-100 text-green-800'
                           }`}>
-                            {item.status}
+                            {item.status || 'Normal'}
                           </div>
                         </TableCell>
                       </TableRow>
