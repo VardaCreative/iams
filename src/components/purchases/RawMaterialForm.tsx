@@ -123,7 +123,7 @@ const RawMaterialForm = ({
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="grid gap-2">
             <Label htmlFor="unit">Unit *</Label>
             <select
@@ -140,20 +140,6 @@ const RawMaterialForm = ({
               <option value="ml">Milliliter (ML)</option>
               <option value="pcs">Pieces (PCS)</option>
             </select>
-          </div>
-          
-          <div className="grid gap-2">
-            <Label htmlFor="unitPrice">Unit Price (₹) *</Label>
-            <Input
-              id="unitPrice"
-              name="unitPrice"
-              type="number"
-              min="0"
-              step="0.01"
-              value={formData.unitPrice}
-              onChange={handleChange}
-              required
-            />
           </div>
           
           <div className="grid gap-2">
@@ -184,6 +170,9 @@ const RawMaterialForm = ({
             <option value="inactive">Inactive</option>
           </select>
         </div>
+
+        {/* Unit Price is hidden but still maintained in the form data */}
+        <input type="hidden" name="unitPrice" value={formData.unitPrice} />
       </div>
     </FormDialog>
   );

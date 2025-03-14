@@ -15,6 +15,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import TaskForm from './TaskForm';
+import { supabase } from '@/integrations/supabase/client';
+import { fetchTasks, saveTask, deleteTask } from '@/lib/database';
 
 export interface Task {
   id: string;
@@ -33,44 +35,51 @@ export interface Task {
 }
 
 const TaskManagement = () => {
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: '1',
-      taskId: 'TASK001',
-      description: 'Process Red Chilli',
-      dateAssigned: new Date('2023-06-15'),
-      rmAssigned: 'Red Chilli',
-      processAssigned: 'Grinding',
-      qtyAssigned: 50,
-      staffName: 'John Doe',
-      dateCompleted: new Date('2023-06-18'),
-      completedQty: 48,
-      wastageQty: 2,
-      remarks: 'Completed on time',
-      status: 'completed'
-    },
-    {
-      id: '2',
-      taskId: 'TASK002',
-      description: 'Process Turmeric',
-      dateAssigned: new Date('2023-06-20'),
-      rmAssigned: 'Turmeric',
-      processAssigned: 'Cleaning',
-      qtyAssigned: 30,
-      staffName: 'Jane Smith',
-      status: 'in-progress'
-    }
-  ]);
-  
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [openForm, setOpenForm] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Effect to ensure data is loaded/refreshed
   useEffect(() => {
-    // In a real app, this would fetch data from an API
+    const loadTasks = async () => {
+      setIsLoading(true);
+      try {
+        const data = await fetchTasks();
+        
+        // Map database structure to frontend structure
+        const mappedData = data.map(item => ({
+          id: item.id,
+          taskId: item.task_id,
+          description: item.description,
+          dateAssigned: new Date(item.date_assigned),
+          rmAssigned: item.rm_assigned,
+          processAssigned: item.process_assigned,
+          qtyAssigned: item.qty_assigned,
+          staffName: item.staff_name,
+          dateCompleted: item.date_completed ? new Date(item.date_completed) : undefined,
+          completedQty: item.completed_qty,
+          wastageQty: item.wastage_qty,
+          remarks: item.remarks,
+          status: item.status as 'pending' | 'in-progress' | 'completed'
+        }));
+        
+        setTasks(mappedData);
+      } catch (error) {
+        console.error('Error loading tasks:', error);
+        toast({
+          title: "Failed to load tasks",
+          description: "There was an error loading tasks data. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadTasks();
     console.log("Task data refreshed");
   }, [refreshTrigger]);
 
@@ -158,65 +167,72 @@ const TaskManagement = () => {
     setOpenDeleteDialog(true);
   };
 
-  const handleSubmit = (data: Task) => {
+  const handleSubmit = async (data: Task) => {
     setIsLoading(true);
     
-    // Persist changes with simulated API call
-    setTimeout(() => {
-      if (selectedTask) {
-        // Update existing task
-        setTasks(prev => 
-          prev.map(task => 
-            task.id === selectedTask.id ? { ...data, id: selectedTask.id } : task
-          )
-        );
-        toast({
-          title: "Task updated",
-          description: `Task ${data.taskId} has been updated successfully.`,
-        });
-      } else {
-        // Add new task - ensure it has an ID
-        const newTask: Task = {
-          ...data,
-          id: Date.now().toString(), // Generate temporary ID
-          taskId: `TASK${(tasks.length + 1).toString().padStart(3, '0')}`
-        };
-        setTasks(prev => [...prev, newTask]);
-        toast({
-          title: "Task added",
-          description: `Task ${newTask.taskId} has been added successfully.`,
-        });
+    try {
+      // Generate a task ID if this is a new task
+      if (!data.taskId) {
+        data.taskId = `TASK${(tasks.length + 1).toString().padStart(3, '0')}`;
       }
       
+      // Map frontend structure to database structure
+      const dbTask = {
+        id: data.id,
+        task_id: data.taskId,
+        description: data.description,
+        date_assigned: data.dateAssigned.toISOString().split('T')[0],
+        rm_assigned: data.rmAssigned,
+        process_assigned: data.processAssigned,
+        qty_assigned: data.qtyAssigned,
+        staff_name: data.staffName,
+        date_completed: data.dateCompleted ? data.dateCompleted.toISOString().split('T')[0] : null,
+        completed_qty: data.completedQty,
+        wastage_qty: data.wastageQty,
+        remarks: data.remarks,
+        status: data.status
+      };
+      
+      const savedTask = await saveTask(dbTask);
+      
+      if (savedTask) {
+        setRefreshTrigger(prev => prev + 1);
+        setOpenForm(false);
+      }
+    } catch (error) {
+      console.error('Error saving task:', error);
+      toast({
+        title: "Failed to save task",
+        description: "There was an error saving the task. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-      setOpenForm(false);
-      // Trigger refresh
-      setRefreshTrigger(prev => prev + 1);
-    }, 600);
+    }
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!selectedTask) return;
     
     setIsLoading(true);
     
-    // Delete task
-    setTimeout(() => {
-      setTasks(prev => 
-        prev.filter(task => task.id !== selectedTask.id)
-      );
+    try {
+      const success = await deleteTask(selectedTask.id);
       
+      if (success) {
+        setRefreshTrigger(prev => prev + 1);
+        setOpenDeleteDialog(false);
+      }
+    } catch (error) {
+      console.error('Error deleting task:', error);
       toast({
-        title: "Task deleted",
-        description: `Task ${selectedTask.taskId} has been deleted.`,
+        title: "Failed to delete task",
+        description: "There was an error deleting the task. Please try again.",
         variant: "destructive",
       });
-      
+    } finally {
       setIsLoading(false);
-      setOpenDeleteDialog(false);
-      // Trigger refresh
-      setRefreshTrigger(prev => prev + 1);
-    }, 600);
+    }
   };
 
   return (
@@ -242,6 +258,7 @@ const TaskManagement = () => {
         columns={columns}
         data={tasks}
         searchPlaceholder="Search tasks..."
+        isLoading={isLoading}
       />
 
       <TaskForm

@@ -15,6 +15,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import StaffForm from './StaffForm';
+import { supabase } from '@/integrations/supabase/client';
+import { fetchStaff, saveStaff, deleteStaff } from '@/lib/database';
 
 export interface StaffMember {
   id: string;
@@ -29,42 +31,49 @@ export interface StaffMember {
 }
 
 const StaffManagement = () => {
-  const [staff, setStaff] = useState<StaffMember[]>([
-    {
-      id: '1',
-      name: 'John Doe',
-      staffId: 'EMP001',
-      bloodGroup: 'O+',
-      email: 'john@example.com',
-      phone: '+91 98765 43210',
-      address: '123 Main St, Bangalore',
-      aadhaar: '1234 5678 9012',
-      status: 'active'
-    },
-    {
-      id: '2',
-      name: 'Jane Smith',
-      staffId: 'EMP002',
-      bloodGroup: 'A+',
-      email: 'jane@example.com',
-      phone: '+91 87654 32109',
-      address: '456 Park Ave, Mumbai',
-      aadhaar: '9876 5432 1098',
-      status: 'active'
-    }
-  ]);
-  
+  const [staff, setStaff] = useState<StaffMember[]>([]);
   const [openForm, setOpenForm] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [trigger, setTrigger] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Effect to ensure the data is loaded when component mounts
   useEffect(() => {
-    // In a real app, this would fetch data from an API or database
+    const loadStaff = async () => {
+      setIsLoading(true);
+      try {
+        const data = await fetchStaff();
+        
+        // Map database structure to frontend structure
+        const mappedData = data.map(item => ({
+          id: item.id,
+          name: item.name,
+          staffId: item.staff_id,
+          bloodGroup: item.blood_group || '',
+          email: item.email,
+          phone: item.phone,
+          address: item.address,
+          aadhaar: item.aadhaar,
+          status: item.status as 'active' | 'inactive'
+        }));
+        
+        setStaff(mappedData);
+      } catch (error) {
+        console.error('Error loading staff:', error);
+        toast({
+          title: "Failed to load staff",
+          description: "There was an error loading staff data. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadStaff();
     console.log("Staff data loaded");
-  }, [trigger]);
+  }, [refreshTrigger]);
 
   const columns = [
     { header: "Staff ID", accessorKey: "staffId" },
@@ -143,64 +152,63 @@ const StaffManagement = () => {
     setOpenDeleteDialog(true);
   };
 
-  const handleSubmit = (data: StaffMember) => {
+  const handleSubmit = async (data: StaffMember) => {
     setIsLoading(true);
     
-    // Persistence simulation
-    setTimeout(() => {
-      if (selectedStaff) {
-        // Update existing staff
-        setStaff(prev => 
-          prev.map(member => 
-            member.id === selectedStaff.id ? { ...data, id: selectedStaff.id } : member
-          )
-        );
-        toast({
-          title: "Staff updated",
-          description: `${data.name} has been updated successfully.`,
-        });
-      } else {
-        // Add new staff - ensure it has an ID
-        const newStaff: StaffMember = {
-          ...data,
-          id: Date.now().toString(), // Generate temporary ID
-        };
-        setStaff(prev => [...prev, newStaff]);
-        toast({
-          title: "Staff added",
-          description: `${data.name} has been added successfully.`,
-        });
-      }
+    try {
+      // Map frontend structure to database structure
+      const dbStaff = {
+        id: data.id,
+        name: data.name,
+        staff_id: data.staffId,
+        blood_group: data.bloodGroup,
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+        aadhaar: data.aadhaar,
+        status: data.status
+      };
       
+      const savedStaff = await saveStaff(dbStaff);
+      
+      if (savedStaff) {
+        setRefreshTrigger(prev => prev + 1);
+        setOpenForm(false);
+      }
+    } catch (error) {
+      console.error('Error saving staff:', error);
+      toast({
+        title: "Failed to save staff member",
+        description: "There was an error saving the staff member. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-      setOpenForm(false);
-      // Trigger refresh
-      setTrigger(prev => prev + 1);
-    }, 600);
+    }
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!selectedStaff) return;
     
     setIsLoading(true);
     
-    // Delete simulation
-    setTimeout(() => {
-      setStaff(prev => 
-        prev.filter(member => member.id !== selectedStaff.id)
-      );
+    try {
+      const success = await deleteStaff(selectedStaff.id);
       
+      if (success) {
+        setRefreshTrigger(prev => prev + 1);
+        setOpenDeleteDialog(false);
+      }
+    } catch (error) {
+      console.error('Error deleting staff:', error);
       toast({
-        title: "Staff deleted",
-        description: `${selectedStaff.name} has been deleted.`,
+        title: "Failed to delete staff member",
+        description: "There was an error deleting the staff member. Please try again.",
         variant: "destructive",
       });
-      
+    } finally {
       setIsLoading(false);
-      setOpenDeleteDialog(false);
-      // Trigger refresh
-      setTrigger(prev => prev + 1);
-    }, 600);
+    }
   };
 
   return (
@@ -212,6 +220,7 @@ const StaffManagement = () => {
         addButtonText="Add Staff Member"
         searchPlaceholder="Search staff..."
         enableImportExport={true}
+        isLoading={isLoading}
       />
 
       <StaffForm

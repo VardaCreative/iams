@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import PageContainer from '@/components/layout/PageContainer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,15 +17,11 @@ const Purchases = () => {
     // Check if database connection works - this is a good place to verify connectivity
     const checkConnection = async () => {
       try {
-        /* For real implementation:
-        const { data, error } = await supabase.from('system_health').select('ping');
+        const { data, error } = await supabase.from('vendors').select('count');
         if (error) throw error;
         
         console.log('Database connection verified');
-        */
-
-        // Since we don't have an actual table, just simulate connection
-        console.log('Database connection simulated');
+        
       } catch (error) {
         console.error('Database connection error:', error);
         toast({
@@ -68,7 +63,7 @@ const Purchases = () => {
             <TabsTrigger value="stock-status">Stock Status</TabsTrigger>
           </TabsList>
           
-          {/* Use conditional rendering instead of forceMount with a boolean value */}
+          {/* Use conditional rendering instead of forceMount */}
           {activeTab === 'vendors' && (
             <TabsContent value="vendors" className="mt-6">
               <VendorManagement />

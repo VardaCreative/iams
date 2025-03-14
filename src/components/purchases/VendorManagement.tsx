@@ -2,9 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import DataTable from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Phone, Mail } from 'lucide-react';
-import VendorForm, { Vendor } from './VendorForm';
+import { Edit, Trash2 } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
+import VendorForm, { Vendor } from './VendorForm';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -19,86 +19,39 @@ import { supabase } from '@/integrations/supabase/client';
 import { fetchVendors, saveVendor, deleteVendor } from '@/lib/database';
 
 const VendorManagement = () => {
-  const [vendors, setVendors] = useState<Vendor[]>([
-    {
-      id: '1',
-      name: 'Spice Traders Ltd.',
-      contactPerson: 'John Smith',
-      email: 'john@spicetraders.com',
-      phone: '+91 98765 43210',
-      address: '123 Spice Market, Mumbai',
-      gstin: 'GSTIN12345678901',
-      status: 'active'
-    },
-    {
-      id: '2',
-      name: 'Global Herbs & Spices',
-      contactPerson: 'Rajesh Kumar',
-      email: 'rajesh@globalherbs.com',
-      phone: '+91 87654 32109',
-      address: '456 Industrial Area, Delhi',
-      gstin: 'GSTIN98765432109',
-      status: 'active'
-    }
-  ]);
+  const [vendors, setVendors] = useState<Vendor[]>([]);
   const [openForm, setOpenForm] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // Load vendors from database on component mount and refresh trigger
   useEffect(() => {
     const loadVendors = async () => {
       setIsLoading(true);
-      
-      // In a real implementation, you would use the database.ts functions
-      /*
-      const data = await fetchVendors();
-      if (data.length > 0) {
-        // Map database fields to Vendor type if necessary
-        const formattedVendors = data.map(vendor => ({
-          id: vendor.id,
-          name: vendor.name,
-          contactPerson: vendor.contact_person,
-          email: vendor.email,
-          phone: vendor.phone,
-          address: vendor.address,
-          gstin: vendor.gstin,
-          status: vendor.status
-        }));
-        setVendors(formattedVendors);
-      }
-      */
-      
-      // Simulate API delay
-      setTimeout(() => {
+      try {
+        const data = await fetchVendors();
+        setVendors(data);
+      } catch (error) {
+        console.error('Error loading vendors:', error);
+        toast({
+          title: "Failed to load vendors",
+          description: "There was an error loading vendors. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
         setIsLoading(false);
-      }, 500);
+      }
     };
-    
+
     loadVendors();
   }, [refreshTrigger]);
 
   const columns = [
     { header: "Name", accessorKey: "name" },
-    { header: "Contact Person", accessorKey: "contactPerson" },
-    { 
-      header: "Contact Info", 
-      accessorKey: "id",
-      cell: (value: string, row: Vendor) => (
-        <div className="flex items-center gap-3">
-          <a href={`mailto:${row.email}`} className="flex items-center text-sm text-muted-foreground hover:text-foreground">
-            <Mail size={16} className="mr-1" />
-            {row.email}
-          </a>
-          <a href={`tel:${row.phone}`} className="flex items-center text-sm text-muted-foreground hover:text-foreground">
-            <Phone size={16} className="mr-1" />
-            {row.phone}
-          </a>
-        </div>
-      )
-    },
+    { header: "Contact Person", accessorKey: "contact_person" },
+    { header: "Email", accessorKey: "email" },
+    { header: "Phone", accessorKey: "phone" },
     { header: "GSTIN", accessorKey: "gstin" },
     { 
       header: "Status", 
@@ -160,84 +113,21 @@ const VendorManagement = () => {
     setIsLoading(true);
     
     try {
-      if (selectedVendor) {
-        // Update existing vendor
-        const updatedVendor = { ...data, id: selectedVendor.id };
-        
-        // In a real implementation:
-        /*
-        const savedVendor = await saveVendor({
-          id: updatedVendor.id,
-          name: updatedVendor.name,
-          contact_person: updatedVendor.contactPerson,
-          email: updatedVendor.email,
-          phone: updatedVendor.phone,
-          address: updatedVendor.address,
-          gstin: updatedVendor.gstin,
-          status: updatedVendor.status
-        });
-        
-        if (savedVendor) {
-          // Update succeeded, refresh the vendor list
-          setRefreshTrigger(prev => prev + 1);
-        }
-        */
-        
-        // For now, update local state
-        setVendors(prev => 
-          prev.map(vendor => 
-            vendor.id === selectedVendor.id ? updatedVendor : vendor
-          )
-        );
-        
-        toast({
-          title: "Vendor updated",
-          description: `${data.name} has been updated successfully.`,
-        });
-      } else {
-        // Add new vendor - ensure it has an ID
-        const newVendor: Vendor = {
-          ...data,
-          id: Date.now().toString(), // Generate temporary ID
-        };
-        
-        // In a real implementation:
-        /*
-        const savedVendor = await saveVendor({
-          id: newVendor.id,
-          name: newVendor.name,
-          contact_person: newVendor.contactPerson,
-          email: newVendor.email,
-          phone: newVendor.phone,
-          address: newVendor.address,
-          gstin: newVendor.gstin,
-          status: newVendor.status
-        });
-        
-        if (savedVendor) {
-          // Save succeeded, refresh the vendor list
-          setRefreshTrigger(prev => prev + 1);
-        }
-        */
-        
-        // For now, update local state
-        setVendors(prev => [...prev, newVendor]);
-        
-        toast({
-          title: "Vendor added",
-          description: `${data.name} has been added successfully.`,
-        });
+      const savedVendor = await saveVendor(data);
+      
+      if (savedVendor) {
+        setRefreshTrigger(prev => prev + 1);
+        setOpenForm(false);
       }
     } catch (error) {
       console.error('Error saving vendor:', error);
       toast({
-        title: "Error saving vendor",
-        description: "An error occurred while saving the vendor data.",
-        variant: "destructive"
+        title: "Failed to save vendor",
+        description: "There was an error saving the vendor. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
-      setOpenForm(false);
     }
   };
 
@@ -247,36 +137,21 @@ const VendorManagement = () => {
     setIsLoading(true);
     
     try {
-      // In a real implementation:
-      /*
       const success = await deleteVendor(selectedVendor.id);
       
       if (success) {
-        // Delete succeeded, refresh the vendor list
         setRefreshTrigger(prev => prev + 1);
+        setOpenDeleteDialog(false);
       }
-      */
-      
-      // For now, update local state
-      setVendors(prev => 
-        prev.filter(vendor => vendor.id !== selectedVendor.id)
-      );
-      
-      toast({
-        title: "Vendor deleted",
-        description: `${selectedVendor.name} has been deleted.`,
-        variant: "destructive",
-      });
     } catch (error) {
       console.error('Error deleting vendor:', error);
       toast({
-        title: "Error deleting vendor",
-        description: "An error occurred while deleting the vendor.",
-        variant: "destructive"
+        title: "Failed to delete vendor",
+        description: "There was an error deleting the vendor. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
-      setOpenDeleteDialog(false);
     }
   };
 

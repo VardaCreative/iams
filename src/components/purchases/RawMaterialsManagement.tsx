@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DataTable from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2 } from 'lucide-react';
@@ -15,36 +15,37 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { supabase } from '@/integrations/supabase/client';
+import { fetchRawMaterials, saveRawMaterial, deleteRawMaterial } from '@/lib/database';
 
 const RawMaterialsManagement = () => {
-  const [materials, setMaterials] = useState<RawMaterial[]>([
-    {
-      id: '1',
-      code: 'RM001',
-      name: 'Red Chilli',
-      category: 'Spices',
-      description: 'Medium heat red chilli',
-      unit: 'kg',
-      unitPrice: 120,
-      minStockLevel: 50,
-      status: 'active'
-    },
-    {
-      id: '2',
-      code: 'RM002',
-      name: 'Turmeric',
-      category: 'Spices',
-      description: 'Pure ground turmeric powder',
-      unit: 'kg',
-      unitPrice: 180,
-      minStockLevel: 30,
-      status: 'active'
-    }
-  ]);
+  const [materials, setMaterials] = useState<RawMaterial[]>([]);
   const [openForm, setOpenForm] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedMaterial, setSelectedMaterial] = useState<RawMaterial | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  useEffect(() => {
+    const loadMaterials = async () => {
+      setIsLoading(true);
+      try {
+        const data = await fetchRawMaterials();
+        setMaterials(data);
+      } catch (error) {
+        console.error('Error loading materials:', error);
+        toast({
+          title: "Failed to load raw materials",
+          description: "There was an error loading raw materials. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadMaterials();
+  }, [refreshTrigger]);
 
   const columns = [
     { header: "Code", accessorKey: "code" },
@@ -121,60 +122,63 @@ const RawMaterialsManagement = () => {
     setOpenDeleteDialog(true);
   };
 
-  const handleSubmit = (data: RawMaterial) => {
+  const handleSubmit = async (data: RawMaterial) => {
     setIsLoading(true);
     
-    // Persistence logic
-    setTimeout(() => {
-      if (selectedMaterial) {
-        // Update existing material
-        setMaterials(prev => 
-          prev.map(material => 
-            material.id === selectedMaterial.id ? { ...data, id: selectedMaterial.id } : material
-          )
-        );
-        toast({
-          title: "Raw material updated",
-          description: `${data.name} has been updated successfully.`,
-        });
-      } else {
-        // Add new material - ensure it has an ID
-        const newMaterial: RawMaterial = {
-          ...data,
-          id: Date.now().toString(), // Generate temporary ID
-        };
-        setMaterials(prev => [...prev, newMaterial]);
-        toast({
-          title: "Raw material added",
-          description: `${data.name} has been added successfully.`,
-        });
-      }
+    try {
+      // Map frontend data structure to database structure
+      const dbMaterial = {
+        id: data.id,
+        code: data.code,
+        name: data.name,
+        category: data.category,
+        description: data.description,
+        unit: data.unit,
+        unit_price: data.unitPrice,
+        min_stock_level: data.minStockLevel,
+        status: data.status
+      };
       
+      const savedMaterial = await saveRawMaterial(dbMaterial);
+      
+      if (savedMaterial) {
+        setRefreshTrigger(prev => prev + 1);
+        setOpenForm(false);
+      }
+    } catch (error) {
+      console.error('Error saving material:', error);
+      toast({
+        title: "Failed to save raw material",
+        description: "There was an error saving the raw material. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-      setOpenForm(false);
-    }, 600);
+    }
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!selectedMaterial) return;
     
     setIsLoading(true);
     
-    // Delete logic
-    setTimeout(() => {
-      setMaterials(prev => 
-        prev.filter(material => material.id !== selectedMaterial.id)
-      );
+    try {
+      const success = await deleteRawMaterial(selectedMaterial.id);
       
+      if (success) {
+        setRefreshTrigger(prev => prev + 1);
+        setOpenDeleteDialog(false);
+      }
+    } catch (error) {
+      console.error('Error deleting material:', error);
       toast({
-        title: "Raw material deleted",
-        description: `${selectedMaterial.name} has been deleted.`,
+        title: "Failed to delete raw material",
+        description: "There was an error deleting the raw material. Please try again.",
         variant: "destructive",
       });
-      
+    } finally {
       setIsLoading(false);
-      setOpenDeleteDialog(false);
-    }, 600);
+    }
   };
 
   return (
@@ -186,6 +190,7 @@ const RawMaterialsManagement = () => {
         addButtonText="Add Raw Material"
         searchPlaceholder="Search raw materials..."
         enableImportExport={true}
+        isLoading={isLoading}
       />
 
       <RawMaterialForm
