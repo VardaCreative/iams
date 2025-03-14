@@ -9,7 +9,369 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      production_status: {
+        Row: {
+          adjustments: number
+          assigned: number
+          category: string
+          closing: number
+          completed: number
+          created_at: string | null
+          date: string
+          id: string
+          min_level: number
+          month: string
+          name: string
+          opening: number
+          pending: number
+          process: string
+          process_stage: string
+          status: string
+          updated_at: string | null
+          wastage: number
+        }
+        Insert: {
+          adjustments?: number
+          assigned?: number
+          category: string
+          closing?: number
+          completed?: number
+          created_at?: string | null
+          date: string
+          id?: string
+          min_level?: number
+          month: string
+          name: string
+          opening?: number
+          pending?: number
+          process: string
+          process_stage: string
+          status?: string
+          updated_at?: string | null
+          wastage?: number
+        }
+        Update: {
+          adjustments?: number
+          assigned?: number
+          category?: string
+          closing?: number
+          completed?: number
+          created_at?: string | null
+          date?: string
+          id?: string
+          min_level?: number
+          month?: string
+          name?: string
+          opening?: number
+          pending?: number
+          process?: string
+          process_stage?: string
+          status?: string
+          updated_at?: string | null
+          wastage?: number
+        }
+        Relationships: []
+      }
+      raw_materials: {
+        Row: {
+          category: string
+          code: string
+          created_at: string | null
+          current_stock: number
+          description: string | null
+          id: string
+          last_purchase_date: string | null
+          min_stock_level: number
+          name: string
+          status: string
+          unit: string
+          unit_price: number
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          code: string
+          created_at?: string | null
+          current_stock?: number
+          description?: string | null
+          id?: string
+          last_purchase_date?: string | null
+          min_stock_level?: number
+          name: string
+          status?: string
+          unit?: string
+          unit_price?: number
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          code?: string
+          created_at?: string | null
+          current_stock?: number
+          description?: string | null
+          id?: string
+          last_purchase_date?: string | null
+          min_stock_level?: number
+          name?: string
+          status?: string
+          unit?: string
+          unit_price?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      staff: {
+        Row: {
+          aadhaar: string
+          address: string
+          blood_group: string | null
+          created_at: string | null
+          email: string
+          id: string
+          name: string
+          phone: string
+          staff_id: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          aadhaar: string
+          address: string
+          blood_group?: string | null
+          created_at?: string | null
+          email: string
+          id?: string
+          name: string
+          phone: string
+          staff_id: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          aadhaar?: string
+          address?: string
+          blood_group?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          name?: string
+          phone?: string
+          staff_id?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      stock_purchases: {
+        Row: {
+          created_at: string | null
+          id: string
+          invoice: string | null
+          material_id: string | null
+          material_name: string
+          purchase_date: string
+          purchase_order: string
+          quantity: number
+          status: string
+          total_amount: number
+          unit: string
+          unit_price: number
+          updated_at: string | null
+          vendor_id: string | null
+          vendor_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          invoice?: string | null
+          material_id?: string | null
+          material_name: string
+          purchase_date: string
+          purchase_order: string
+          quantity?: number
+          status?: string
+          total_amount?: number
+          unit?: string
+          unit_price?: number
+          updated_at?: string | null
+          vendor_id?: string | null
+          vendor_name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          invoice?: string | null
+          material_id?: string | null
+          material_name?: string
+          purchase_date?: string
+          purchase_order?: string
+          quantity?: number
+          status?: string
+          total_amount?: number
+          unit?: string
+          unit_price?: number
+          updated_at?: string | null
+          vendor_id?: string | null
+          vendor_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_purchases_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "raw_materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_purchases_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_status: {
+        Row: {
+          adj_plus: number
+          category: string
+          closing_bal: number
+          created_at: string | null
+          date: string
+          id: string
+          min_level: number
+          name: string
+          opening_bal: number
+          purchases: number
+          status: string
+          updated_at: string | null
+          utilised: number
+        }
+        Insert: {
+          adj_plus?: number
+          category: string
+          closing_bal?: number
+          created_at?: string | null
+          date: string
+          id?: string
+          min_level?: number
+          name: string
+          opening_bal?: number
+          purchases?: number
+          status?: string
+          updated_at?: string | null
+          utilised?: number
+        }
+        Update: {
+          adj_plus?: number
+          category?: string
+          closing_bal?: number
+          created_at?: string | null
+          date?: string
+          id?: string
+          min_level?: number
+          name?: string
+          opening_bal?: number
+          purchases?: number
+          status?: string
+          updated_at?: string | null
+          utilised?: number
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          completed_qty: number | null
+          created_at: string | null
+          date_assigned: string
+          date_completed: string | null
+          description: string
+          id: string
+          process_assigned: string
+          qty_assigned: number
+          remarks: string | null
+          rm_assigned: string
+          staff_name: string
+          status: string
+          task_id: string
+          updated_at: string | null
+          wastage_qty: number | null
+        }
+        Insert: {
+          completed_qty?: number | null
+          created_at?: string | null
+          date_assigned: string
+          date_completed?: string | null
+          description: string
+          id?: string
+          process_assigned: string
+          qty_assigned?: number
+          remarks?: string | null
+          rm_assigned: string
+          staff_name: string
+          status?: string
+          task_id: string
+          updated_at?: string | null
+          wastage_qty?: number | null
+        }
+        Update: {
+          completed_qty?: number | null
+          created_at?: string | null
+          date_assigned?: string
+          date_completed?: string | null
+          description?: string
+          id?: string
+          process_assigned?: string
+          qty_assigned?: number
+          remarks?: string | null
+          rm_assigned?: string
+          staff_name?: string
+          status?: string
+          task_id?: string
+          updated_at?: string | null
+          wastage_qty?: number | null
+        }
+        Relationships: []
+      }
+      vendors: {
+        Row: {
+          address: string
+          contact_person: string
+          created_at: string | null
+          email: string
+          gstin: string
+          id: string
+          name: string
+          phone: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          address: string
+          contact_person: string
+          created_at?: string | null
+          email: string
+          gstin: string
+          id?: string
+          name: string
+          phone: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string
+          contact_person?: string
+          created_at?: string | null
+          email?: string
+          gstin?: string
+          id?: string
+          name?: string
+          phone?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

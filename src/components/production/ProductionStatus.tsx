@@ -1,7 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from '@/components/ui/label';
@@ -10,12 +8,12 @@ import { Button } from '@/components/ui/button';
 import { ArrowRightLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "@/hooks/use-toast";
+import { fetchProductionStatus, saveProductionStatus } from '@/lib/database';
 
 const months = ["Jan-24", "Feb-24", "Mar-24", "Apr-24"];
 const processStages = ["Pre-Prod", "Production"];
 const processes = ["Cleaning", "Grinding", "Packing"];
 
-// Updated interface to include status
 interface ProductionItem {
   id: string;
   name: string;
@@ -28,10 +26,9 @@ interface ProductionItem {
   adjustments: number;
   closing: number;
   minLevel: number;
-  status?: string; // Add status property
+  status: string;
 }
 
-// Sample data structure to match the required format
 const initialPreProductionData: ProductionItem[] = [
   { 
     id: "RM1", 
@@ -44,7 +41,8 @@ const initialPreProductionData: ProductionItem[] = [
     pending: 0.00, 
     adjustments: 0.00, 
     closing: 10.00,
-    minLevel: 5.00
+    minLevel: 5.00,
+    status: 'Normal'
   },
   { 
     id: "RM2", 
@@ -57,7 +55,8 @@ const initialPreProductionData: ProductionItem[] = [
     pending: 0.00, 
     adjustments: 0.00, 
     closing: 24.90, 
-    minLevel: 7.50
+    minLevel: 7.50,
+    status: 'Normal'
   },
   { 
     id: "RM3", 
@@ -70,7 +69,8 @@ const initialPreProductionData: ProductionItem[] = [
     pending: 0.00, 
     adjustments: 0.00, 
     closing: 13.80, 
-    minLevel: 4.00
+    minLevel: 4.00,
+    status: 'Normal'
   },
 ];
 
@@ -82,37 +82,41 @@ const ProductionStatus = () => {
   const [tableData, setTableData] = useState<ProductionItem[]>(initialPreProductionData);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Process data and apply the formulas according to the requirements
   useEffect(() => {
-    // In a real application, this would fetch data from tasks or the database
     fetchProductionData();
   }, [selectedMonth, selectedProcessStage, selectedProcess, statusDate]);
   
   const fetchProductionData = async () => {
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      const data = processData(getDataByProcessType());
-      setTableData(data);
-      setIsLoading(false);
-    }, 500);
-    
-    // In a real implementation, you would fetch from Supabase:
-    /*
     try {
-      const { data, error } = await supabase
-        .from('production_status')
-        .select('*')
-        .eq('month', selectedMonth)
-        .eq('process_stage', selectedProcessStage)
-        .eq('process', selectedProcess);
-        
-      if (error) throw error;
+      const data = await fetchProductionStatus({
+        date: statusDate,
+        stage: selectedProcessStage,
+        process: selectedProcess,
+        month: selectedMonth
+      });
       
-      if (data) {
-        const processedData = processData(data);
-        setTableData(processedData);
+      if (data && data.length > 0) {
+        const formattedData: ProductionItem[] = data.map(item => ({
+          id: item.id,
+          name: item.name,
+          category: item.category,
+          opening: item.opening,
+          assigned: item.assigned,
+          completed: item.completed,
+          wastage: item.wastage,
+          pending: item.pending,
+          adjustments: item.adjustments || 0,
+          closing: item.closing,
+          minLevel: item.min_level,
+          status: item.status
+        }));
+        
+        setTableData(processData(formattedData));
+      } else {
+        const sampleData = getDataByProcessType();
+        setTableData(processData(sampleData));
       }
     } catch (error) {
       console.error('Error fetching production data:', error);
@@ -121,13 +125,14 @@ const ProductionStatus = () => {
         description: "Please try again later",
         variant: "destructive"
       });
+      
+      const sampleData = getDataByProcessType();
+      setTableData(processData(sampleData));
     } finally {
       setIsLoading(false);
     }
-    */
   };
   
-  // Get the appropriate data based on process selection
   const getDataByProcessType = (): ProductionItem[] => {
     if (selectedProcessStage === "Pre-Prod") {
       return initialPreProductionData;
@@ -143,8 +148,9 @@ const ProductionStatus = () => {
           wastage: 0.50, 
           pending: 0.00, 
           adjustments: 0.00, 
-          closing: 0.00, // Will be calculated by formula
-          minLevel: 10.00
+          closing: 0.00, 
+          minLevel: 10.00,
+          status: 'Normal'
         },
         { 
           id: "SKU2", 
@@ -156,8 +162,9 @@ const ProductionStatus = () => {
           wastage: 0.30, 
           pending: 0.00, 
           adjustments: 0.00, 
-          closing: 0.00, // Will be calculated by formula
-          minLevel: 5.00
+          closing: 0.00, 
+          minLevel: 5.00,
+          status: 'Normal'
         },
       ];
     } else if (selectedProcess === "Packing") {
@@ -172,8 +179,9 @@ const ProductionStatus = () => {
           wastage: 2, 
           pending: 0, 
           adjustments: 0, 
-          closing: 0, // Will be calculated by formula
-          minLevel: 20
+          closing: 0, 
+          minLevel: 20,
+          status: 'Normal'
         },
         { 
           id: "PKSKU2", 
@@ -185,22 +193,19 @@ const ProductionStatus = () => {
           wastage: 0, 
           pending: 0, 
           adjustments: 0, 
-          closing: 0, // Will be calculated by formula
-          minLevel: 15
+          closing: 0, 
+          minLevel: 15,
+          status: 'Normal'
         },
       ];
     }
     return initialPreProductionData;
   };
   
-  // Apply formulas to the data as per requirements
   const processData = (data: ProductionItem[]): ProductionItem[] => {
     return data.map(item => {
-      // Formula as specified in the image: 
-      // Closing Stock = Opening stock + Completed - Wastage + Adj(+/-)
       const closingBalance = item.opening + item.completed - item.wastage + (item.adjustments || 0);
       
-      // Define status based on closing balance vs min level
       let status = 'Normal';
       if (closingBalance <= item.minLevel * 0.3) {
         status = 'Critical';
@@ -216,12 +221,10 @@ const ProductionStatus = () => {
     });
   };
   
-  // Handle date change
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setStatusDate(e.target.value);
   };
   
-  // Update status based on current selections
   const handleUpdateStatus = () => {
     fetchProductionData();
     toast({
@@ -230,43 +233,38 @@ const ProductionStatus = () => {
     });
   };
   
-  // Save adjustments to the database
   const saveAdjustments = async () => {
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      toast({
-        title: "Adjustments Saved",
-        description: "Production status adjustments have been saved successfully.",
-      });
-      setIsLoading(false);
-    }, 500);
-    
-    // In a real implementation, you would save to Supabase:
-    /*
     try {
-      // Prepare data for update
       const updates = tableData.map(item => ({
-        id: item.id,
-        adjustments: item.adjustments,
-        month: selectedMonth,
+        date: statusDate,
         process_stage: selectedProcessStage,
         process: selectedProcess,
-        date: statusDate
+        month: selectedMonth,
+        name: item.name,
+        category: item.category,
+        opening: item.opening,
+        assigned: item.assigned,
+        completed: item.completed,
+        wastage: item.wastage,
+        pending: item.pending,
+        adjustments: item.adjustments,
+        closing: item.closing,
+        min_level: item.minLevel,
+        status: item.status
       }));
       
-      // Update in database
-      const { error } = await supabase
-        .from('production_status')
-        .upsert(updates);
-        
-      if (error) throw error;
+      const result = await saveProductionStatus(updates);
       
-      toast({
-        title: "Adjustments Saved",
-        description: "Production status adjustments have been saved successfully.",
-      });
+      if (result) {
+        toast({
+          title: "Adjustments Saved",
+          description: "Production status adjustments have been saved successfully.",
+        });
+      } else {
+        throw new Error("Failed to save adjustments");
+      }
     } catch (error) {
       console.error('Error saving adjustments:', error);
       toast({
@@ -277,17 +275,27 @@ const ProductionStatus = () => {
     } finally {
       setIsLoading(false);
     }
-    */
   };
   
-  // Handle adjustment changes
   const handleAdjustmentChange = (id: string, value: number) => {
     setTableData(prev => prev.map(item => {
       if (item.id === id) {
         const adjustments = isNaN(value) ? 0 : value;
-        // Recalculate closing balance with the new adjustment
         const closing = item.opening + item.completed - item.wastage + adjustments;
-        return { ...item, adjustments, closing };
+        
+        let status = 'Normal';
+        if (closing <= item.minLevel * 0.3) {
+          status = 'Critical';
+        } else if (closing <= item.minLevel) {
+          status = 'Low Stock';
+        }
+        
+        return { 
+          ...item, 
+          adjustments, 
+          closing: parseFloat(closing.toFixed(2)),
+          status 
+        };
       }
       return item;
     }));

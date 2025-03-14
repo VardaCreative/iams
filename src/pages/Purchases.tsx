@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import PageContainer from '@/components/layout/PageContainer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -67,30 +68,30 @@ const Purchases = () => {
             <TabsTrigger value="stock-status">Stock Status</TabsTrigger>
           </TabsList>
           
-          {/* Fix the forceMount property to use conditional rendering */}
-          <div className={activeTab === 'vendors' ? '' : 'hidden'}>
-            <TabsContent value="vendors" forceMount className="mt-6">
+          {/* Use conditional rendering instead of forceMount with a boolean value */}
+          {activeTab === 'vendors' && (
+            <TabsContent value="vendors" className="mt-6">
               <VendorManagement />
             </TabsContent>
-          </div>
+          )}
           
-          <div className={activeTab === 'raw-materials' ? '' : 'hidden'}>
-            <TabsContent value="raw-materials" forceMount className="mt-6">
+          {activeTab === 'raw-materials' && (
+            <TabsContent value="raw-materials" className="mt-6">
               <RawMaterialsManagement />
             </TabsContent>
-          </div>
+          )}
           
-          <div className={activeTab === 'stock-purchases' ? '' : 'hidden'}>
-            <TabsContent value="stock-purchases" forceMount className="mt-6">
+          {activeTab === 'stock-purchases' && (
+            <TabsContent value="stock-purchases" className="mt-6">
               <StockPurchasesManagement />
             </TabsContent>
-          </div>
+          )}
           
-          <div className={activeTab === 'stock-status' ? '' : 'hidden'}>
-            <TabsContent value="stock-status" forceMount className="mt-6">
+          {activeTab === 'stock-status' && (
+            <TabsContent value="stock-status" className="mt-6">
               <StockStatusView />
             </TabsContent>
-          </div>
+          )}
         </Tabs>
       </div>
     </PageContainer>
