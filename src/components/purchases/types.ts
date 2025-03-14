@@ -11,6 +11,19 @@ export interface StockItem {
   status: 'normal' | 'low' | 'critical';
 }
 
+export interface StockStatusItem {
+  id: string;
+  name: string;
+  category: string;
+  opening_bal: number;
+  purchases: number;
+  utilised: number;
+  adj_plus: number;
+  closing_bal: number;
+  min_level: number;
+  status: 'Normal' | 'Low Stock' | 'Out of Stock';
+}
+
 // Add type declaration for the global window.stockManager
 declare global {
   interface Window {

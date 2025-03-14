@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { StockPurchase } from './StockPurchaseForm';
+import { StockPurchase } from './StockPurchasesManagement';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -33,7 +33,7 @@ const PurchaseDeleteDialog: React.FC<PurchaseDeleteDialogProps> = ({
         <AlertDialogHeader>
           <AlertDialogTitle>Are you sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will permanently delete purchase order "{selectedPurchase?.purchaseOrder}".
+            This will permanently delete purchase order "{selectedPurchase?.purchase_order}".
             This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>

@@ -3,8 +3,8 @@ import React, { useState, useEffect } from 'react';
 import DataTable from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2 } from 'lucide-react';
-import { toast } from "@/hooks/use-toast";
 import VendorForm, { Vendor } from './VendorForm';
+import { toast } from "@/hooks/use-toast";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -32,7 +32,20 @@ const VendorManagement = () => {
       try {
         const data = await fetchVendors();
         console.log('Fetched vendors:', data);
-        setVendors(data);
+        
+        // Map the response to ensure the status is of the correct type
+        const mappedVendors = data.map(vendor => ({
+          id: vendor.id,
+          name: vendor.name,
+          contact_person: vendor.contact_person,
+          email: vendor.email,
+          phone: vendor.phone,
+          address: vendor.address,
+          gstin: vendor.gstin,
+          status: vendor.status === 'active' ? 'active' as const : 'inactive' as const
+        }));
+        
+        setVendors(mappedVendors);
       } catch (error) {
         console.error('Error loading vendors:', error);
         toast({

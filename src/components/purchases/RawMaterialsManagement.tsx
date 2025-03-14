@@ -32,7 +32,20 @@ const RawMaterialsManagement = () => {
       try {
         const data = await fetchRawMaterials();
         console.log('Fetched raw materials:', data);
-        setMaterials(data);
+        
+        // Map database data to the expected RawMaterial type
+        const mappedMaterials = data.map(material => ({
+          id: material.id,
+          code: material.code,
+          name: material.name,
+          category: material.category,
+          description: material.description || '',
+          unit: material.unit,
+          min_stock_level: material.min_stock_level,
+          status: material.status === 'active' ? 'active' as const : 'inactive' as const
+        }));
+        
+        setMaterials(mappedMaterials);
       } catch (error) {
         console.error('Error loading materials:', error);
         toast({

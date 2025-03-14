@@ -10,10 +10,10 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { StockItem } from './StockStatusView';
+import { StockStatusItem } from './types';
 
 interface StockStatusTableProps {
-  items: StockItem[];
+  items: StockStatusItem[];
   isLoading: boolean;
   isEditing: boolean;
   onAdjustmentChange: (id: string, value: number) => void;
@@ -88,8 +88,8 @@ const StockStatusTable: React.FC<StockStatusTableProps> = ({
           {items.map((item) => {
             // Calculate closing balance on-the-fly for display
             const closingBal = isEditing 
-              ? item.openingBal + item.purchases - item.utilised + item.adjPlus
-              : item.closingBal;
+              ? item.opening_bal + item.purchases - item.utilised + item.adj_plus
+              : item.closing_bal;
             
             // Determine row color based on status
             const rowColor = item.status === 'Out of Stock' 
@@ -102,19 +102,19 @@ const StockStatusTable: React.FC<StockStatusTableProps> = ({
               <TableRow key={item.id || item.name} className={rowColor}>
                 <TableCell className="font-medium">{item.name}</TableCell>
                 <TableCell>{item.category}</TableCell>
-                <TableCell className="text-right">{item.openingBal}</TableCell>
+                <TableCell className="text-right">{item.opening_bal}</TableCell>
                 <TableCell className="text-right">{item.purchases}</TableCell>
                 <TableCell className="text-right">{item.utilised}</TableCell>
                 <TableCell className="text-right">
                   {isEditing ? (
                     <Input
                       type="number"
-                      value={item.adjPlus}
+                      value={item.adj_plus}
                       onChange={(e) => onAdjustmentChange(item.id || item.name, parseFloat(e.target.value) || 0)}
                       className="w-20 text-right"
                     />
                   ) : (
-                    item.adjPlus
+                    item.adj_plus
                   )}
                 </TableCell>
                 <TableCell className="text-right">
@@ -124,12 +124,12 @@ const StockStatusTable: React.FC<StockStatusTableProps> = ({
                   {isEditing ? (
                     <Input
                       type="number"
-                      value={item.minLevel}
+                      value={item.min_level}
                       onChange={(e) => onMinLevelChange(item.id || item.name, parseFloat(e.target.value) || 0)}
                       className="w-20 text-right"
                     />
                   ) : (
-                    item.minLevel
+                    item.min_level
                   )}
                 </TableCell>
                 <TableCell>

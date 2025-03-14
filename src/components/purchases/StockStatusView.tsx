@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,23 +8,11 @@ import StockStatusStats from './StockStatusStats';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "@/hooks/use-toast";
 import { fetchStockStatus, saveStockStatus, fetchRawMaterials } from '@/lib/database';
-
-export interface StockItem {
-  id: string;
-  name: string;
-  category: string;
-  opening_bal: number;
-  purchases: number;
-  utilised: number;
-  adj_plus: number;
-  closing_bal: number;
-  min_level: number;
-  status: 'Normal' | 'Low Stock' | 'Out of Stock';
-}
+import { StockStatusItem } from './types';
 
 const StockStatusView = () => {
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [stockItems, setStockItems] = useState<StockItem[]>([]);
+  const [stockItems, setStockItems] = useState<StockStatusItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -97,7 +84,6 @@ const StockStatusView = () => {
 
   const handleCancel = () => {
     setIsEditing(false);
-    // Refresh to revert any unsaved changes
     setRefreshTrigger(prev => prev + 1);
   };
 

@@ -3,7 +3,7 @@ import React from 'react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2, FileText } from 'lucide-react';
-import { StockPurchase } from './StockPurchaseForm';
+import { StockPurchase } from './StockPurchasesManagement';
 
 export const formatDate = (date: Date) => {
   return format(new Date(date), 'dd/MM/yyyy');
@@ -17,10 +17,10 @@ interface ColumnProps {
 export const getPurchaseColumns = ({ handleEdit, handleDelete }: ColumnProps) => [
   { 
     header: "Date", 
-    accessorKey: "purchaseDate",
+    accessorKey: "purchase_date",
     cell: (value: Date) => formatDate(value)
   },
-  { header: "Vendor", accessorKey: "vendorName" },
+  { header: "Vendor", accessorKey: "vendor_name" },
   { 
     header: "PO / Invoice", 
     accessorKey: "id",
@@ -28,7 +28,7 @@ export const getPurchaseColumns = ({ handleEdit, handleDelete }: ColumnProps) =>
       <div className="space-y-1">
         <div className="flex items-center text-sm">
           <FileText size={14} className="mr-1 text-muted-foreground" />
-          {row.purchaseOrder}
+          {row.purchase_order}
         </div>
         {row.invoice && (
           <div className="text-xs text-muted-foreground">{row.invoice}</div>
@@ -36,7 +36,7 @@ export const getPurchaseColumns = ({ handleEdit, handleDelete }: ColumnProps) =>
       </div>
     )
   },
-  { header: "Material", accessorKey: "materialName" },
+  { header: "Material", accessorKey: "material_name" },
   { 
     header: "Quantity", 
     accessorKey: "quantity",
@@ -44,12 +44,12 @@ export const getPurchaseColumns = ({ handleEdit, handleDelete }: ColumnProps) =>
   },
   { 
     header: "Unit Price", 
-    accessorKey: "unitPrice",
+    accessorKey: "unit_price",
     cell: (value: number) => `₹${value.toFixed(2)}`
   },
   { 
     header: "Total Amount", 
-    accessorKey: "totalAmount",
+    accessorKey: "total_amount",
     cell: (value: number) => `₹${value.toLocaleString('en-IN')}`
   },
   { 
