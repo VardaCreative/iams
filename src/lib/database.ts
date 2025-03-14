@@ -1,6 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "@/hooks/use-toast";
+import { format } from 'date-fns';
 
 // Generic error handler
 export const handleError = (error: any, customMessage = "Operation failed") => {
@@ -260,6 +260,198 @@ export const saveStockStatus = async (stockData: any[]) => {
     return true;
   } catch (error) {
     handleError(error, "Failed to save stock status");
+    return false;
+  }
+};
+
+// Function to update stock status purchases field
+export const updateStockStatusPurchases = async (material_id: string, quantity: number, purchase_date: Date, isAddition: boolean) => {
+  try {
+    // Format the date to YYYY-MM-DD
+    const formattedDate = format(purchase_date, 'yyyy-MM-dd');
+    
+    // First, get the material name
+    const { data: materialData, error: materialError } = await supabase
+      .from('raw_materials')
+      .select('name, category')
+      .eq('id', material_id)
+      .single();
+      
+    if (materialError || !materialData) {
+      console.error('Error getting material:', materialError);
+      return false;
+    }
+    
+    // Check if there's a stock status entry for this date and material
+    const { data: stockStatusData, error: stockStatusError } = await supabase
+      .from('stock_status')
+      .select('*')
+      .eq('date', formattedDate)
+      .eq('name', materialData.name);
+      
+    if (stockStatusError) {
+      console.error('Error checking stock status:', stockStatusError);
+      return false;
+    }
+    
+    if (stockStatusData && stockStatusData.length > 0) {
+      // Update existing entry
+      const item = stockStatusData[0];
+      const newPurchases = isAddition 
+        ? item.purchases + quantity 
+        : Math.max(0, item.purchases - quantity);
+      
+      // Calculate new closing balance
+      const closing_bal = item.opening_bal + newPurchases - item.utilised + item.adj_plus;
+      
+      // Determine status based on closing balance and minimum level
+      let status: 'Normal' | 'Low Stock' | 'Out of Stock';
+      if (closing_bal <= 0) {
+        status = 'Out of Stock';
+      } else if (closing_bal < item.min_level) {
+        status = 'Low Stock';
+      } else {
+        status = 'Normal';
+      }
+      
+      const { error: updateError } = await supabase
+        .from('stock_status')
+        .update({ 
+          purchases: newPurchases,
+          closing_bal,
+          status
+        })
+        .eq('id', item.id);
+        
+      if (updateError) {
+        console.error('Error updating stock status purchases:', updateError);
+        return false;
+      }
+    } else {
+      // Get the material's minimum stock level
+      const min_level = materialData.min_stock_level || 0;
+      
+      // Create new entry with default values
+      const newEntry = {
+        date: formattedDate,
+        name: materialData.name,
+        category: materialData.category,
+        opening_bal: 0,
+        purchases: isAddition ? quantity : 0,
+        utilised: 0,
+        adj_plus: 0,
+        closing_bal: isAddition ? quantity : 0,
+        min_level,
+        status: isAddition && quantity > 0 ? 'Normal' : 'Out of Stock'
+      };
+      
+      const { error: insertError } = await supabase
+        .from('stock_status')
+        .insert(newEntry);
+        
+      if (insertError) {
+        console.error('Error creating stock status entry:', insertError);
+        return false;
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error updating stock status purchases:', error);
+    return false;
+  }
+};
+
+// Function to update stock status utilisation field
+export const updateStockStatusUtilisation = async (material_id: string, material_name: string, quantity: number) => {
+  try {
+    // Format today's date to YYYY-MM-DD
+    const today = new Date();
+    const formattedDate = format(today, 'yyyy-MM-dd');
+    
+    // Check if there's a stock status entry for this date and material
+    const { data: stockStatusData, error: stockStatusError } = await supabase
+      .from('stock_status')
+      .select('*')
+      .eq('date', formattedDate)
+      .eq('name', material_name);
+      
+    if (stockStatusError) {
+      console.error('Error checking stock status:', stockStatusError);
+      return false;
+    }
+    
+    if (stockStatusData && stockStatusData.length > 0) {
+      // Update existing entry
+      const item = stockStatusData[0];
+      const newUtilised = item.utilised + quantity;
+      
+      // Calculate new closing balance
+      const closing_bal = item.opening_bal + item.purchases - newUtilised + item.adj_plus;
+      
+      // Determine status based on closing balance and minimum level
+      let status: 'Normal' | 'Low Stock' | 'Out of Stock';
+      if (closing_bal <= 0) {
+        status = 'Out of Stock';
+      } else if (closing_bal < item.min_level) {
+        status = 'Low Stock';
+      } else {
+        status = 'Normal';
+      }
+      
+      const { error: updateError } = await supabase
+        .from('stock_status')
+        .update({ 
+          utilised: newUtilised,
+          closing_bal,
+          status
+        })
+        .eq('id', item.id);
+        
+      if (updateError) {
+        console.error('Error updating stock status utilisation:', updateError);
+        return false;
+      }
+    } else {
+      // If no entry exists, we need material details
+      const { data: materialData, error: materialError } = await supabase
+        .from('raw_materials')
+        .select('category, min_stock_level')
+        .eq('id', material_id)
+        .single();
+        
+      if (materialError || !materialData) {
+        console.error('Error getting material:', materialError);
+        return false;
+      }
+      
+      // Create new entry with default values
+      const newEntry = {
+        date: formattedDate,
+        name: material_name,
+        category: materialData.category,
+        opening_bal: 0,
+        purchases: 0,
+        utilised: quantity,
+        adj_plus: 0,
+        closing_bal: -quantity, // Negative because we're using without purchase
+        min_level: materialData.min_stock_level || 0,
+        status: 'Out of Stock' // If only utilisation exists, it must be out of stock
+      };
+      
+      const { error: insertError } = await supabase
+        .from('stock_status')
+        .insert(newEntry);
+        
+      if (insertError) {
+        console.error('Error creating stock status entry:', insertError);
+        return false;
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error updating stock status utilisation:', error);
     return false;
   }
 };

@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { StockItem } from './types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "@/hooks/use-toast";
+import { updateStockStatusUtilisation } from '@/lib/database';
 
 export const useStockManager = (initialStockItems: StockItem[]) => {
   const [stockItems, setStockItems] = useState<StockItem[]>(initialStockItems);
@@ -215,33 +215,22 @@ export const useStockManager = (initialStockItems: StockItem[]) => {
             return item;
           });
           
-          // In a real implementation, you would save to Supabase:
-          /*
-          const item = updatedItems.find(item => item.id === material_id);
-          if (item) {
-            supabase
-              .from('raw_materials')
-              .update({
-                current_stock: item.current_stock,
-                last_purchase_date: item.last_purchase_date,
-                status: item.status
-              })
-              .eq('id', material_id)
-              .then(({ error }) => {
-                if (error) {
-                  console.error('Error updating stock:', error);
-                  toast({
-                    title: "Error updating stock",
-                    description: "Stock update failed to save to database",
-                    variant: "destructive"
-                  });
-                }
-              });
-          }
-          */
+          // In a real implementation, you would save to Supabase
           
           return updatedItems;
         });
+      },
+      updateUtilisation: async (material_id: string, quantity: number) => {
+        // Update stock status utilisation for the material
+        try {
+          const material = stockItems.find(item => item.id === material_id);
+          if (material) {
+            await updateStockStatusUtilisation(material_id, material.name, quantity);
+            console.log(`Updated utilisation for ${material.name}: ${quantity}`);
+          }
+        } catch (error) {
+          console.error('Error updating utilisation:', error);
+        }
       },
       getStockItems: () => stockItems
     };

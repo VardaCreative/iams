@@ -6,7 +6,7 @@ import PurchaseDeleteDialog from './PurchaseDeleteDialog';
 import { getPurchaseColumns } from './PurchaseTableColumns';
 import { toast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
-import { fetchVendors, fetchRawMaterials, fetchStockPurchases, saveStockPurchase, deleteStockPurchase } from '@/lib/database';
+import { fetchVendors, fetchRawMaterials, fetchStockPurchases, saveStockPurchase, deleteStockPurchase, updateStockStatusPurchases } from '@/lib/database';
 
 export interface StockPurchase {
   id: string;
@@ -141,6 +141,10 @@ const StockPurchasesManagement = () => {
                 true, 
                 data.purchase_date
               );
+              
+              // Update stock status purchases for the current month
+              const purchaseDate = data.purchase_date instanceof Date ? data.purchase_date : new Date(data.purchase_date);
+              await updateStockStatusPurchases(data.material_id, data.quantity, purchaseDate, true);
             } 
             // If status changed from 'received' to something else, decrease stock
             else if (selectedPurchase.status === 'received' && data.status !== 'received') {
@@ -149,6 +153,11 @@ const StockPurchasesManagement = () => {
                 selectedPurchase.quantity, 
                 false
               );
+              
+              // Update stock status purchases for the current month (subtract)
+              const purchaseDate = selectedPurchase.purchase_date instanceof Date ? 
+                selectedPurchase.purchase_date : new Date(selectedPurchase.purchase_date);
+              await updateStockStatusPurchases(selectedPurchase.material_id, selectedPurchase.quantity, purchaseDate, false);
             } 
             // If status remains 'received' but quantity changed
             else if (selectedPurchase.status === 'received' && data.status === 'received' && 
@@ -159,6 +168,7 @@ const StockPurchasesManagement = () => {
                 selectedPurchase.quantity, 
                 false
               );
+              
               // Then add new quantity
               stockManager.updateStock(
                 data.material_id, 
@@ -166,6 +176,15 @@ const StockPurchasesManagement = () => {
                 true, 
                 data.purchase_date
               );
+              
+              // Update stock status purchases (remove old, add new)
+              const oldPurchaseDate = selectedPurchase.purchase_date instanceof Date ? 
+                selectedPurchase.purchase_date : new Date(selectedPurchase.purchase_date);
+              await updateStockStatusPurchases(selectedPurchase.material_id, selectedPurchase.quantity, oldPurchaseDate, false);
+              
+              const newPurchaseDate = data.purchase_date instanceof Date ? 
+                data.purchase_date : new Date(data.purchase_date);
+              await updateStockStatusPurchases(data.material_id, data.quantity, newPurchaseDate, true);
             }
           } else if (data.status === 'received') {
             // New purchase marked as received
@@ -175,6 +194,10 @@ const StockPurchasesManagement = () => {
               true,
               data.purchase_date
             );
+            
+            // Update stock status purchases for the current month
+            const purchaseDate = data.purchase_date instanceof Date ? data.purchase_date : new Date(data.purchase_date);
+            await updateStockStatusPurchases(data.material_id, data.quantity, purchaseDate, true);
           }
         }
         
@@ -214,6 +237,11 @@ const StockPurchasesManagement = () => {
             selectedPurchase.quantity,
             false
           );
+          
+          // Update stock status purchases for the current month (subtract)
+          const purchaseDate = selectedPurchase.purchase_date instanceof Date ? 
+            selectedPurchase.purchase_date : new Date(selectedPurchase.purchase_date);
+          await updateStockStatusPurchases(selectedPurchase.material_id, selectedPurchase.quantity, purchaseDate, false);
         }
         
         setRefreshTrigger(prev => prev + 1);

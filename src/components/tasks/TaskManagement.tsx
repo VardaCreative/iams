@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import TaskForm from './TaskForm';
 import { supabase } from '@/integrations/supabase/client';
-import { fetchTasks, saveTask, deleteTask } from '@/lib/database';
+import { fetchTasks, saveTask, deleteTask, fetchRawMaterials } from '@/lib/database';
 
 export interface Task {
   id: string;
@@ -179,6 +179,28 @@ const TaskManagement = () => {
         data.taskId = `TASK${(tasks.length + 1).toString().padStart(3, '0')}`;
       }
       
+      // Get the raw material ID for the assigned material
+      const { data: materialData, error: materialError } = await supabase
+        .from('raw_materials')
+        .select('id, name')
+        .eq('name', data.rmAssigned)
+        .single();
+        
+      if (materialError) {
+        console.error('Error finding material:', materialError);
+      }
+      
+      // For new task or status change to in-progress/completed
+      const isNewTask = !data.id;
+      const oldTask = tasks.find(t => t.id === data.id);
+      const statusChanged = oldTask && oldTask.status !== data.status;
+      
+      // Check if we need to update utilisation
+      const shouldUpdateUtilisation = 
+        (isNewTask && (data.status === 'in-progress' || data.status === 'completed')) || 
+        (statusChanged && (data.status === 'in-progress' || data.status === 'completed') && 
+         oldTask.status === 'pending');
+      
       // Map frontend structure to database structure
       const dbTask = {
         id: data.id,
@@ -204,6 +226,16 @@ const TaskManagement = () => {
       const savedTask = await saveTask(dbTask);
       
       if (savedTask) {
+        // If this is a new in-progress/completed task or status changed from pending,
+        // update the stock utilisation
+        if (shouldUpdateUtilisation && materialData && window.stockManager?.updateUtilisation) {
+          await window.stockManager.updateUtilisation(
+            materialData.id,
+            data.qtyAssigned
+          );
+          console.log(`Updated utilisation for ${data.rmAssigned}: ${data.qtyAssigned}`);
+        }
+        
         setRefreshTrigger(prev => prev + 1);
         setOpenForm(false);
         toast({

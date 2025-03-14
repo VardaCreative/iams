@@ -31,6 +31,7 @@ declare global {
       items: StockItem[];
       updateStock: (material_id: string, quantity: number, isAddition: boolean, purchase_date?: Date) => void;
       getStockItems: () => StockItem[];
+      updateUtilisation?: (material_id: string, quantity: number) => void;
     };
   }
 }
