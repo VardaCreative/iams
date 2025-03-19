@@ -364,6 +364,75 @@ export type Database = {
         }
         Relationships: []
       }
+      stock_purchases: {
+        Row: {
+          created_at: string | null
+          id: string
+          invoice: string | null
+          material_id: string | null
+          material_name: string
+          purchase_date: string
+          purchase_order: string | null
+          quantity: number
+          status: string
+          total_amount: number
+          unit: string
+          unit_price: number
+          updated_at: string | null
+          vendor_id: string | null
+          vendor_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          invoice?: string | null
+          material_id?: string | null
+          material_name: string
+          purchase_date: string
+          purchase_order?: string | null
+          quantity: number
+          status?: string
+          total_amount: number
+          unit: string
+          unit_price: number
+          updated_at?: string | null
+          vendor_id?: string | null
+          vendor_name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          invoice?: string | null
+          material_id?: string | null
+          material_name?: string
+          purchase_date?: string
+          purchase_order?: string | null
+          quantity?: number
+          status?: string
+          total_amount?: number
+          unit?: string
+          unit_price?: number
+          updated_at?: string | null
+          vendor_id?: string | null
+          vendor_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_purchases_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "raw_materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_purchases_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_status: {
         Row: {
           adj_plus: number
@@ -482,30 +551,39 @@ export type Database = {
       }
       vendors: {
         Row: {
+          address: string | null
           contact_person: string | null
           created_at: string | null
           email: string | null
+          gstin: string | null
           id: string
           name: string
           phone: string | null
+          status: string | null
           updated_at: string | null
         }
         Insert: {
+          address?: string | null
           contact_person?: string | null
           created_at?: string | null
           email?: string | null
+          gstin?: string | null
           id?: string
           name: string
           phone?: string | null
+          status?: string | null
           updated_at?: string | null
         }
         Update: {
+          address?: string | null
           contact_person?: string | null
           created_at?: string | null
           email?: string | null
+          gstin?: string | null
           id?: string
           name?: string
           phone?: string | null
+          status?: string | null
           updated_at?: string | null
         }
         Relationships: []
