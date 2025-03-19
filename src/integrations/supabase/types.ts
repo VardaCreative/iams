@@ -9,6 +9,91 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      inventory_movements: {
+        Row: {
+          created_at: string | null
+          id: string
+          movement_type: string
+          notes: string | null
+          product_id: string | null
+          quantity: number
+          reference_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          movement_type: string
+          notes?: string | null
+          product_id?: string | null
+          quantity: number
+          reference_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          movement_type?: string
+          notes?: string | null
+          product_id?: string | null
+          quantity?: number
+          reference_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_movements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_batches: {
+        Row: {
+          batch_number: string
+          completion_date: string | null
+          created_at: string | null
+          id: string
+          product_id: string | null
+          quantity: number
+          start_date: string | null
+          status: string
+          updated_at: string | null
+          wastage: number | null
+        }
+        Insert: {
+          batch_number: string
+          completion_date?: string | null
+          created_at?: string | null
+          id?: string
+          product_id?: string | null
+          quantity: number
+          start_date?: string | null
+          status?: string
+          updated_at?: string | null
+          wastage?: number | null
+        }
+        Update: {
+          batch_number?: string
+          completion_date?: string | null
+          created_at?: string | null
+          id?: string
+          product_id?: string | null
+          quantity?: number
+          start_date?: string | null
+          status?: string
+          updated_at?: string | null
+          wastage?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_batches_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       production_status: {
         Row: {
           adjustments: number
@@ -72,6 +157,42 @@ export type Database = {
         }
         Relationships: []
       }
+      products: {
+        Row: {
+          category: string
+          created_at: string | null
+          current_stock: number
+          id: string
+          min_stock: number
+          name: string
+          sku: string
+          unit_price: number
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          current_stock?: number
+          id?: string
+          min_stock?: number
+          name: string
+          sku: string
+          unit_price?: number
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          current_stock?: number
+          id?: string
+          min_stock?: number
+          name?: string
+          sku?: string
+          unit_price?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       raw_materials: {
         Row: {
           category: string
@@ -120,6 +241,87 @@ export type Database = {
         }
         Relationships: []
       }
+      sales: {
+        Row: {
+          channel_id: string | null
+          created_at: string | null
+          id: string
+          invoice_number: string
+          order_number: string
+          product_id: string | null
+          quantity: number
+          sale_date: string | null
+          total_amount: number
+          unit_price: number
+          updated_at: string | null
+        }
+        Insert: {
+          channel_id?: string | null
+          created_at?: string | null
+          id?: string
+          invoice_number: string
+          order_number: string
+          product_id?: string | null
+          quantity: number
+          sale_date?: string | null
+          total_amount: number
+          unit_price: number
+          updated_at?: string | null
+        }
+        Update: {
+          channel_id?: string | null
+          created_at?: string | null
+          id?: string
+          invoice_number?: string
+          order_number?: string
+          product_id?: string | null
+          quantity?: number
+          sale_date?: string | null
+          total_amount?: number
+          unit_price?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "sales_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_channels: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       staff: {
         Row: {
           aadhaar: string
@@ -161,75 +363,6 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
-      }
-      stock_purchases: {
-        Row: {
-          created_at: string | null
-          id: string
-          invoice: string | null
-          material_id: string | null
-          material_name: string
-          purchase_date: string
-          purchase_order: string
-          quantity: number
-          status: string
-          total_amount: number
-          unit: string
-          unit_price: number
-          updated_at: string | null
-          vendor_id: string | null
-          vendor_name: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          invoice?: string | null
-          material_id?: string | null
-          material_name: string
-          purchase_date: string
-          purchase_order: string
-          quantity?: number
-          status?: string
-          total_amount?: number
-          unit?: string
-          unit_price?: number
-          updated_at?: string | null
-          vendor_id?: string | null
-          vendor_name: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          invoice?: string | null
-          material_id?: string | null
-          material_name?: string
-          purchase_date?: string
-          purchase_order?: string
-          quantity?: number
-          status?: string
-          total_amount?: number
-          unit?: string
-          unit_price?: number
-          updated_at?: string | null
-          vendor_id?: string | null
-          vendor_name?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "stock_purchases_material_id_fkey"
-            columns: ["material_id"]
-            isOneToOne: false
-            referencedRelation: "raw_materials"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stock_purchases_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "vendors"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       stock_status: {
         Row: {
@@ -281,93 +414,98 @@ export type Database = {
       }
       tasks: {
         Row: {
-          completed_qty: number | null
+          assigned_to: string | null
           created_at: string | null
-          date_assigned: string
-          date_completed: string | null
-          description: string
+          description: string | null
+          due_date: string | null
           id: string
-          process_assigned: string
-          qty_assigned: number
-          remarks: string | null
-          rm_assigned: string
-          staff_name: string
+          priority: string
           status: string
-          task_id: string
+          title: string
           updated_at: string | null
-          wastage_qty: number | null
         }
         Insert: {
-          completed_qty?: number | null
+          assigned_to?: string | null
           created_at?: string | null
-          date_assigned: string
-          date_completed?: string | null
-          description: string
+          description?: string | null
+          due_date?: string | null
           id?: string
-          process_assigned: string
-          qty_assigned?: number
-          remarks?: string | null
-          rm_assigned: string
-          staff_name: string
+          priority?: string
           status?: string
-          task_id: string
+          title: string
           updated_at?: string | null
-          wastage_qty?: number | null
         }
         Update: {
-          completed_qty?: number | null
+          assigned_to?: string | null
           created_at?: string | null
-          date_assigned?: string
-          date_completed?: string | null
-          description?: string
+          description?: string | null
+          due_date?: string | null
           id?: string
-          process_assigned?: string
-          qty_assigned?: number
-          remarks?: string | null
-          rm_assigned?: string
-          staff_name?: string
+          priority?: string
           status?: string
-          task_id?: string
+          title?: string
           updated_at?: string | null
-          wastage_qty?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          created_at: string | null
+          full_name: string | null
+          id: string
+          role: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          full_name?: string | null
+          id: string
+          role: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          full_name?: string | null
+          id?: string
+          role?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
       vendors: {
         Row: {
-          address: string
-          contact_person: string
+          contact_person: string | null
           created_at: string | null
-          email: string
-          gstin: string
+          email: string | null
           id: string
           name: string
-          phone: string
-          status: string
+          phone: string | null
           updated_at: string | null
         }
         Insert: {
-          address: string
-          contact_person: string
+          contact_person?: string | null
           created_at?: string | null
-          email: string
-          gstin: string
+          email?: string | null
           id?: string
           name: string
-          phone: string
-          status?: string
+          phone?: string | null
           updated_at?: string | null
         }
         Update: {
-          address?: string
-          contact_person?: string
+          contact_person?: string | null
           created_at?: string | null
-          email?: string
-          gstin?: string
+          email?: string | null
           id?: string
           name?: string
-          phone?: string
-          status?: string
+          phone?: string | null
           updated_at?: string | null
         }
         Relationships: []

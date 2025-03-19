@@ -435,7 +435,7 @@ export const updateStockStatusUtilisation = async (material_id: string, material
         utilised: quantity,
         adj_plus: 0,
         closing_bal: -quantity, // Negative because we're using without purchase
-        min_level: materialData.min_stock_level || 0,
+        min_level: materialData.min_stock_level || 0, // Use the min_stock_level from raw_materials
         status: 'Out of Stock' // If only utilisation exists, it must be out of stock
       };
       
