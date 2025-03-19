@@ -142,41 +142,45 @@ const StockStatusView = () => {
       // Initialize utilization by material
       const utilizationByMaterial: Record<string, number> = {};
       
-      // Check if tasks table has the required columns before querying
-      // We'll use a direct approach without information_schema
-      let hasRequiredColumns = false;
-      
+      // Check if the tasks table has the necessary columns without using information_schema
       try {
-        // Try to fetch a single row to check if the columns we need exist
-        const { data: sampleTask, error: sampleError } = await supabase
+        // First, try to get a sample task to check if it has the columns we need
+        const { data: sampleTask } = await supabase
           .from('tasks')
-          .select('rm_assigned, qty_assigned, process_assigned')
+          .select('*')
           .limit(1);
           
-        // If we got data and no error, then the columns exist
-        hasRequiredColumns = !!sampleTask && !sampleError;
-        
+        // If we have a sample task, check if it has the required columns
+        const hasRequiredColumns = 
+          sampleTask && 
+          sampleTask.length > 0 && 
+          'rm_assigned' in sampleTask[0] && 
+          'qty_assigned' in sampleTask[0] && 
+          'process_assigned' in sampleTask[0];
+          
         if (hasRequiredColumns) {
           console.log('Required task columns exist, fetching utilization data');
           
           // Fetch all task assignments for the month (for utilization)
-          const { data: tasks, error: tasksError } = await supabase
+          const { data: tasks } = await supabase
             .from('tasks')
-            .select('rm_assigned, qty_assigned')
+            .select('*')
             .gte('date_assigned', monthStart)
             .lte('date_assigned', monthEnd)
             .eq('process_assigned', 'Cleaning');
             
-          if (tasksError) {
-            console.error('Error fetching monthly task utilization:', tasksError);
-          } else if (tasks) {
-            // Aggregate utilization by material
+          if (tasks && tasks.length > 0) {
+            // Safely aggregate utilization by material
             tasks.forEach(task => {
-              if (task.rm_assigned) { // Make sure the property exists
-                if (!utilizationByMaterial[task.rm_assigned]) {
-                  utilizationByMaterial[task.rm_assigned] = 0;
+              // Safely access properties with type checking
+              const rmAssigned = task.rm_assigned as string | undefined;
+              const qtyAssigned = task.qty_assigned as number | undefined;
+              
+              if (rmAssigned && qtyAssigned !== undefined) {
+                if (!utilizationByMaterial[rmAssigned]) {
+                  utilizationByMaterial[rmAssigned] = 0;
                 }
-                utilizationByMaterial[task.rm_assigned] += Number(task.qty_assigned || 0);
+                utilizationByMaterial[rmAssigned] += Number(qtyAssigned);
               }
             });
           }
