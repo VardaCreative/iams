@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { format } from 'date-fns';
+import { format, parse, startOfMonth, endOfMonth } from 'date-fns';
 import StockStatusTable from './StockStatusTable';
 import StockStatusStats from './StockStatusStats';
 import { supabase } from '@/integrations/supabase/client';
@@ -46,19 +46,36 @@ const StockStatusView = () => {
           // If no data for the selected date, initialize with raw materials
           const materials = await fetchRawMaterials();
           console.log('No stock data found, initializing with raw materials:', materials);
-          const initialItems = materials.map(material => ({
-            id: '', // New items will get IDs from the database
-            name: material.name,
-            category: material.category,
-            opening_bal: 0,
-            purchases: 0,
-            utilised: 0,
-            adj_plus: 0,
-            closing_bal: 0,
-            min_level: material.min_stock_level,
-            status: 'Normal' as 'Normal' | 'Low Stock' | 'Out of Stock'
-          }));
+
+          // For a new month, also get the previous month's closing balances to use as opening balances
+          const previousMonthDate = getPreviousMonthLastDay(selectedDate);
+          const prevMonthData = await fetchStockStatus(previousMonthDate);
+          
+          const initialItems = materials.map(material => {
+            // Find this material in previous month data if available
+            const prevMonthItem = prevMonthData?.find(item => item.name === material.name);
+            
+            return {
+              id: '', // New items will get IDs from the database
+              name: material.name,
+              category: material.category,
+              // Use previous month's closing balance as opening balance if available
+              opening_bal: prevMonthItem ? prevMonthItem.closing_bal : 0,
+              purchases: 0,
+              utilised: 0,
+              adj_plus: 0,
+              // Initial closing balance equals opening balance
+              closing_bal: prevMonthItem ? prevMonthItem.closing_bal : 0,
+              min_level: material.min_stock_level,
+              status: determineStatus(prevMonthItem ? prevMonthItem.closing_bal : 0, material.min_stock_level)
+            };
+          });
           setStockItems(initialItems);
+        }
+
+        // After loading initial data, fetch the cumulative purchases and utilization for the current month
+        if (selectedDate) {
+          await fetchMonthlyPurchasesAndUtilization(selectedDate);
         }
       } catch (error) {
         console.error('Error loading stock status:', error);
@@ -74,6 +91,95 @@ const StockStatusView = () => {
 
     loadStockStatus();
   }, [selectedDate, refreshTrigger]);
+
+  // Helper function to determine status based on quantity and min level
+  const determineStatus = (quantity: number, minLevel: number): 'Normal' | 'Low Stock' | 'Out of Stock' => {
+    if (quantity <= 0) return 'Out of Stock';
+    if (quantity < minLevel) return 'Low Stock';
+    return 'Normal';
+  };
+
+  // Helper function to get the last day of the previous month
+  const getPreviousMonthLastDay = (dateString: string) => {
+    const date = parse(dateString, 'yyyy-MM-dd', new Date());
+    const firstDayOfMonth = startOfMonth(date);
+    const lastDayOfPrevMonth = new Date(firstDayOfMonth);
+    lastDayOfPrevMonth.setDate(lastDayOfPrevMonth.getDate() - 1);
+    return format(lastDayOfPrevMonth, 'yyyy-MM-dd');
+  };
+
+  // Function to fetch monthly purchases and utilization data
+  const fetchMonthlyPurchasesAndUtilization = async (dateString: string) => {
+    try {
+      const date = parse(dateString, 'yyyy-MM-dd', new Date());
+      const monthStart = format(startOfMonth(date), 'yyyy-MM-dd');
+      const monthEnd = format(endOfMonth(date), 'yyyy-MM-dd');
+      
+      // Fetch all stock purchases for the month
+      const { data: purchases, error: purchasesError } = await supabase
+        .from('stock_purchases')
+        .select('material_name, quantity')
+        .gte('purchase_date', monthStart)
+        .lte('purchase_date', monthEnd)
+        .eq('status', 'received');
+        
+      if (purchasesError) {
+        console.error('Error fetching monthly purchases:', purchasesError);
+        return;
+      }
+      
+      // Fetch all task assignments for the month (for utilization)
+      const { data: tasks, error: tasksError } = await supabase
+        .from('tasks')
+        .select('rm_assigned, qty_assigned')
+        .gte('date_assigned', monthStart)
+        .lte('date_assigned', monthEnd)
+        .eq('process_assigned', 'Cleaning'); // According to the spec, only cleaning process
+        
+      if (tasksError) {
+        console.error('Error fetching monthly task utilization:', tasksError);
+        return;
+      }
+      
+      // Aggregate purchases by material
+      const purchasesByMaterial = purchases?.reduce((acc, curr) => {
+        if (!acc[curr.material_name]) {
+          acc[curr.material_name] = 0;
+        }
+        acc[curr.material_name] += Number(curr.quantity);
+        return acc;
+      }, {} as Record<string, number>) || {};
+      
+      // Aggregate utilization by material
+      const utilizationByMaterial = tasks?.reduce((acc, curr) => {
+        if (!acc[curr.rm_assigned]) {
+          acc[curr.rm_assigned] = 0;
+        }
+        acc[curr.rm_assigned] += Number(curr.qty_assigned);
+        return acc;
+      }, {} as Record<string, number>) || {};
+      
+      // Update the stock items with the fetched data
+      setStockItems(prevItems => 
+        prevItems.map(item => {
+          const purchases = purchasesByMaterial[item.name] || 0;
+          const utilised = utilizationByMaterial[item.name] || 0;
+          const closing_bal = item.opening_bal + purchases - utilised + item.adj_plus;
+          
+          return {
+            ...item,
+            purchases,
+            utilised,
+            closing_bal,
+            status: determineStatus(closing_bal, item.min_level)
+          };
+        })
+      );
+      
+    } catch (error) {
+      console.error('Error fetching monthly data:', error);
+    }
+  };
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedDate(e.target.value);
@@ -153,19 +259,63 @@ const StockStatusView = () => {
     }
   };
 
+  const handleOpeningBalChange = (id: string, value: number) => {
+    setStockItems(prevItems =>
+      prevItems.map(item => {
+        if (item.id === id || (!item.id && item.name === id)) {
+          // Calculate new closing balance with the updated opening balance
+          const closing_bal = value + item.purchases - item.utilised + item.adj_plus;
+          // Determine status based on new closing balance
+          let status = determineStatus(closing_bal, item.min_level);
+          
+          return { 
+            ...item, 
+            opening_bal: value,
+            closing_bal,
+            status
+          };
+        }
+        return item;
+      })
+    );
+  };
+
   const handleAdjustmentChange = (id: string, value: number) => {
     setStockItems(prevItems =>
-      prevItems.map(item =>
-        item.id === id ? { ...item, adj_plus: value } : item
-      )
+      prevItems.map(item => {
+        if (item.id === id || (!item.id && item.name === id)) {
+          // Calculate new closing balance with the updated adjustment
+          const closing_bal = item.opening_bal + item.purchases - item.utilised + value;
+          // Determine status based on new closing balance
+          let status = determineStatus(closing_bal, item.min_level);
+          
+          return { 
+            ...item, 
+            adj_plus: value,
+            closing_bal,
+            status
+          };
+        }
+        return item;
+      })
     );
   };
 
   const handleMinLevelChange = (id: string, value: number) => {
     setStockItems(prevItems =>
-      prevItems.map(item =>
-        item.id === id ? { ...item, min_level: value } : item
-      )
+      prevItems.map(item => {
+        if (item.id === id || (!item.id && item.name === id)) {
+          // Recalculate status based on the new min level
+          let status = determineStatus(item.closing_bal, value);
+          
+          return { 
+            ...item, 
+            min_level: value,
+            status
+          };
+        }
+        return item;
+      })
     );
   };
 
@@ -221,6 +371,7 @@ const StockStatusView = () => {
         items={stockItems}
         isLoading={isLoading}
         isEditing={isEditing}
+        onOpeningBalChange={handleOpeningBalChange}
         onAdjustmentChange={handleAdjustmentChange}
         onMinLevelChange={handleMinLevelChange}
       />

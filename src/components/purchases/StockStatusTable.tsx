@@ -16,6 +16,7 @@ interface StockStatusTableProps {
   items: StockStatusItem[];
   isLoading: boolean;
   isEditing: boolean;
+  onOpeningBalChange: (id: string, value: number) => void;
   onAdjustmentChange: (id: string, value: number) => void;
   onMinLevelChange: (id: string, value: number) => void;
 }
@@ -24,6 +25,7 @@ const StockStatusTable: React.FC<StockStatusTableProps> = ({
   items,
   isLoading,
   isEditing,
+  onOpeningBalChange,
   onAdjustmentChange,
   onMinLevelChange
 }) => {
@@ -87,9 +89,7 @@ const StockStatusTable: React.FC<StockStatusTableProps> = ({
         <TableBody>
           {items.map((item) => {
             // Calculate closing balance on-the-fly for display
-            const closingBal = isEditing 
-              ? item.opening_bal + item.purchases - item.utilised + item.adj_plus
-              : item.closing_bal;
+            const closingBal = item.opening_bal + item.purchases - item.utilised + item.adj_plus;
             
             // Determine row color based on status
             const rowColor = item.status === 'Out of Stock' 
@@ -102,34 +102,48 @@ const StockStatusTable: React.FC<StockStatusTableProps> = ({
               <TableRow key={item.id || item.name} className={rowColor}>
                 <TableCell className="font-medium">{item.name}</TableCell>
                 <TableCell>{item.category}</TableCell>
-                <TableCell className="text-right">{item.opening_bal}</TableCell>
-                <TableCell className="text-right">{item.purchases}</TableCell>
-                <TableCell className="text-right">{item.utilised}</TableCell>
                 <TableCell className="text-right">
                   {isEditing ? (
                     <Input
                       type="number"
+                      step="0.01"
+                      value={item.opening_bal}
+                      onChange={(e) => onOpeningBalChange(item.id || item.name, parseFloat(e.target.value) || 0)}
+                      className="w-20 text-right"
+                    />
+                  ) : (
+                    item.opening_bal.toFixed(2)
+                  )}
+                </TableCell>
+                <TableCell className="text-right">{item.purchases.toFixed(2)}</TableCell>
+                <TableCell className="text-right">{item.utilised.toFixed(2)}</TableCell>
+                <TableCell className="text-right">
+                  {isEditing ? (
+                    <Input
+                      type="number"
+                      step="0.01"
                       value={item.adj_plus}
                       onChange={(e) => onAdjustmentChange(item.id || item.name, parseFloat(e.target.value) || 0)}
                       className="w-20 text-right"
                     />
                   ) : (
-                    item.adj_plus
+                    item.adj_plus.toFixed(2)
                   )}
                 </TableCell>
                 <TableCell className="text-right">
-                  {closingBal}
+                  {closingBal.toFixed(2)}
                 </TableCell>
                 <TableCell className="text-right">
                   {isEditing ? (
                     <Input
                       type="number"
+                      step="0.01"
                       value={item.min_level}
                       onChange={(e) => onMinLevelChange(item.id || item.name, parseFloat(e.target.value) || 0)}
                       className="w-20 text-right"
                     />
                   ) : (
-                    item.min_level
+                    item.min_level.toFixed(2)
                   )}
                 </TableCell>
                 <TableCell>
