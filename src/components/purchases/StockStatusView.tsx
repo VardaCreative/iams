@@ -11,6 +11,23 @@ import { toast } from "@/hooks/use-toast";
 import { fetchStockStatus, saveStockStatus, fetchRawMaterials } from '@/lib/database';
 import { StockStatusItem } from './types';
 
+// Define a supplementary type for tasks with optional custom fields
+interface TaskWithCustomFields {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  priority: string;
+  assigned_to: string;
+  due_date: string;
+  created_at: string;
+  updated_at: string;
+  rm_assigned?: string;
+  qty_assigned?: number;
+  process_assigned?: string;
+  date_assigned?: string;
+}
+
 const StockStatusView = () => {
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [stockItems, setStockItems] = useState<StockStatusItem[]>([]);
@@ -142,54 +159,57 @@ const StockStatusView = () => {
       // Initialize utilization by material
       const utilizationByMaterial: Record<string, number> = {};
       
-      // Check if the tasks table has the necessary columns without using information_schema
+      // Check if the tasks table has the necessary columns
       try {
-        // First, try to get a sample task to check if it has the columns we need
-        const { data: sampleTask } = await supabase
+        // Get a sample task to check structure
+        const { data: sampleTaskData } = await supabase
           .from('tasks')
           .select('*')
           .limit(1);
           
-        // If we have a sample task, check if it has the required columns
-        const hasRequiredColumns = 
-          sampleTask && 
-          sampleTask.length > 0 && 
-          'rm_assigned' in sampleTask[0] && 
-          'qty_assigned' in sampleTask[0] && 
-          'process_assigned' in sampleTask[0];
+        // Check if the sample has custom fields we need
+        if (sampleTaskData && sampleTaskData.length > 0) {
+          const sampleTask = sampleTaskData[0] as TaskWithCustomFields;
           
-        if (hasRequiredColumns) {
-          console.log('Required task columns exist, fetching utilization data');
-          
-          // Fetch all task assignments for the month (for utilization)
-          const { data: tasks } = await supabase
-            .from('tasks')
-            .select('*')
-            .gte('date_assigned', monthStart)
-            .lte('date_assigned', monthEnd)
-            .eq('process_assigned', 'Cleaning');
+          // Check if the necessary custom fields exist
+          if ('rm_assigned' in sampleTask && 'qty_assigned' in sampleTask && 'process_assigned' in sampleTask) {
+            console.log('Required task columns exist, fetching utilization data');
             
-          if (tasks && tasks.length > 0) {
-            // Safely aggregate utilization by material
-            tasks.forEach(task => {
-              // Safely access properties with type checking
-              const rmAssigned = task.rm_assigned as string | undefined;
-              const qtyAssigned = task.qty_assigned as number | undefined;
+            // Fetch tasks for the month
+            const { data: tasksData } = await supabase
+              .from('tasks')
+              .select('*')
+              .gte('created_at', monthStart)
+              .lte('created_at', monthEnd)
+              .eq('status', 'completed');
               
-              if (rmAssigned && qtyAssigned !== undefined) {
-                if (!utilizationByMaterial[rmAssigned]) {
-                  utilizationByMaterial[rmAssigned] = 0;
+            if (tasksData && tasksData.length > 0) {
+              // Process each task, treating all fields as optional
+              tasksData.forEach(taskData => {
+                const task = taskData as TaskWithCustomFields;
+                
+                // Only process tasks that have the required fields and are cleaning tasks
+                if (task.rm_assigned && 
+                    task.qty_assigned !== undefined && 
+                    task.process_assigned === 'Cleaning') {
+                  
+                  if (!utilizationByMaterial[task.rm_assigned]) {
+                    utilizationByMaterial[task.rm_assigned] = 0;
+                  }
+                  
+                  utilizationByMaterial[task.rm_assigned] += Number(task.qty_assigned);
                 }
-                utilizationByMaterial[rmAssigned] += Number(qtyAssigned);
-              }
-            });
+              });
+            }
+          } else {
+            console.log('Tasks table missing required custom fields. Skipping utilization data.');
           }
         } else {
-          console.log('Tasks table missing required columns. Skipping utilization data.');
+          console.log('No tasks found in the database. Skipping utilization data.');
         }
       } catch (error) {
-        console.error('Error checking task columns:', error);
-        console.log('Tasks table missing required columns or other error. Skipping utilization data.');
+        console.error('Error fetching task data:', error);
+        console.log('Skipping utilization data due to error.');
       }
       
       // Update the stock items with the fetched data
