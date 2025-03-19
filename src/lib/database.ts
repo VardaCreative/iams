@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "@/hooks/use-toast";
 import { format } from 'date-fns';
@@ -13,6 +12,30 @@ export const handleError = (error: any, customMessage = "Operation failed") => {
     variant: "destructive",
   });
 };
+
+// Add this interface for the Task type from the database
+interface Task {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  priority: string;
+  assigned_to: string;
+  due_date: string;
+  created_at: string;
+  updated_at: string;
+  // Additional properties the component expects
+  task_id?: string;
+  date_assigned?: string;
+  rm_assigned?: string;
+  process_assigned?: string;
+  qty_assigned?: number;
+  staff_name?: string;
+  date_completed?: string;
+  completed_qty?: number;
+  wastage_qty?: number;
+  remarks?: string;
+}
 
 // Vendor operations
 export const fetchVendors = async () => {
@@ -521,16 +544,32 @@ export const deleteStaff = async (id: string) => {
 };
 
 // Tasks operations
-export const fetchTasks = async () => {
+export const fetchTasks = async (): Promise<Task[]> => {
   try {
     const { data, error } = await supabase
       .from('tasks')
       .select('*')
-      .order('date_assigned', { ascending: false });
+      .order('created_at', { ascending: false });
       
     if (error) throw error;
-    console.log("Fetched tasks:", data);
-    return data || [];
+    
+    // Transform the data to include the expected properties
+    const transformedData = data?.map(task => ({
+      ...task,
+      task_id: task.id.slice(0, 8),  // Generate a shorter task_id from the UUID
+      date_assigned: task.created_at,
+      rm_assigned: '',  // Default values for missing fields
+      process_assigned: '',
+      qty_assigned: 0,
+      staff_name: '',
+      date_completed: task.status === 'completed' ? task.updated_at : null,
+      completed_qty: 0,
+      wastage_qty: 0,
+      remarks: ''
+    })) || [];
+    
+    console.log("Fetched tasks:", transformedData);
+    return transformedData;
   } catch (error) {
     handleError(error, "Failed to fetch tasks");
     return [];

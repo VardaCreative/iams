@@ -30,14 +30,14 @@ export interface StockPurchase {
   vendor_id: string;
   vendor_name: string;
   purchase_order: string;
-  invoice: string;
+  invoice?: string;
   material_id: string;
   material_name: string;
   quantity: number;
   unit: string;
   unit_price: number;
   total_amount: number;
-  status: 'ordered' | 'received';
+  status: 'ordered' | 'received' | 'cancelled';
 }
 
 export interface Vendor {
