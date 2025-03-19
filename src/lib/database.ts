@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "@/hooks/use-toast";
 import { format } from 'date-fns';
@@ -298,7 +299,7 @@ export const updateStockStatusPurchases = async (material_id: string, quantity: 
     // First, get the material name
     const { data: materialData, error: materialError } = await supabase
       .from('raw_materials')
-      .select('name, category')
+      .select('name, category, min_stock_level')
       .eq('id', material_id)
       .single();
       
