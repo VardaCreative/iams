@@ -3,17 +3,7 @@ import React from 'react';
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import FormDialog from "@/components/common/FormDialog";
-
-export interface Vendor {
-  id: string;
-  name: string;
-  contact_person: string;
-  email: string;
-  phone: string;
-  address: string;
-  gstin: string;
-  status: 'active' | 'inactive';
-}
+import { Vendor } from './types';
 
 interface VendorFormProps {
   open: boolean;

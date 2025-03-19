@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import DataTable from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2 } from 'lucide-react';
-import VendorForm, { Vendor } from './VendorForm';
+import VendorForm from './VendorForm';
 import { toast } from "@/hooks/use-toast";
 import { 
   AlertDialog,
@@ -15,8 +14,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { supabase } from '@/integrations/supabase/client';
 import { fetchVendors, saveVendor, deleteVendor } from '@/lib/database';
+import { Vendor } from './types';
 
 const VendorManagement = () => {
   const [vendors, setVendors] = useState<Vendor[]>([]);
@@ -33,15 +32,14 @@ const VendorManagement = () => {
         const data = await fetchVendors();
         console.log('Fetched vendors:', data);
         
-        // Map the response to ensure the status is of the correct type
-        const mappedVendors = data.map(vendor => ({
+        const mappedVendors: Vendor[] = data.map(vendor => ({
           id: vendor.id,
           name: vendor.name,
-          contact_person: vendor.contact_person,
-          email: vendor.email,
-          phone: vendor.phone,
-          address: vendor.address,
-          gstin: vendor.gstin,
+          contact_person: vendor.contact_person || '',
+          email: vendor.email || '',
+          phone: vendor.phone || '',
+          address: vendor.address || '',
+          gstin: vendor.gstin || '',
           status: vendor.status === 'active' ? 'active' as const : 'inactive' as const
         }));
         

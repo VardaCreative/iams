@@ -1,6 +1,8 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "@/hooks/use-toast";
 import { format } from 'date-fns';
+import { StockPurchase, Vendor } from '@/components/purchases/types';
 
 // Generic error handler
 export const handleError = (error: any, customMessage = "Operation failed") => {
@@ -29,7 +31,7 @@ export const fetchVendors = async () => {
   }
 };
 
-export const saveVendor = async (vendor: any) => {
+export const saveVendor = async (vendor: Vendor) => {
   try {
     console.log("Saving vendor:", vendor);
     

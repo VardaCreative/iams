@@ -24,6 +24,33 @@ export interface StockStatusItem {
   status: 'Normal' | 'Low Stock' | 'Out of Stock';
 }
 
+export interface StockPurchase {
+  id: string;
+  purchase_date: string | Date;
+  vendor_id: string;
+  vendor_name: string;
+  purchase_order: string;
+  invoice: string;
+  material_id: string;
+  material_name: string;
+  quantity: number;
+  unit: string;
+  unit_price: number;
+  total_amount: number;
+  status: 'ordered' | 'received';
+}
+
+export interface Vendor {
+  id: string;
+  name: string;
+  contact_person: string;
+  email: string;
+  phone: string;
+  address: string;
+  gstin: string;
+  status: 'active' | 'inactive';
+}
+
 // Add type declaration for the global window.stockManager
 declare global {
   interface Window {
