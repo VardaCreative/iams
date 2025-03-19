@@ -128,36 +128,62 @@ const StockStatusView = () => {
         return;
       }
       
-      // Fetch all task assignments for the month (for utilization)
-      const { data: tasks, error: tasksError } = await supabase
-        .from('tasks')
-        .select('rm_assigned, qty_assigned')
-        .gte('date_assigned', monthStart)
-        .lte('date_assigned', monthEnd)
-        .eq('process_assigned', 'Cleaning'); // According to the spec, only cleaning process
+      // Initialize purchases by material
+      const purchasesByMaterial: Record<string, number> = {};
+      if (purchases) {
+        purchases.forEach(purchase => {
+          if (!purchasesByMaterial[purchase.material_name]) {
+            purchasesByMaterial[purchase.material_name] = 0;
+          }
+          purchasesByMaterial[purchase.material_name] += Number(purchase.quantity);
+        });
+      }
+      
+      // Check if tasks table has the required columns before querying
+      // First get the columns of the tasks table
+      const { data: columns, error: columnsError } = await supabase
+        .from('information_schema.columns')
+        .select('column_name')
+        .eq('table_name', 'tasks')
+        .eq('table_schema', 'public');
         
-      if (tasksError) {
-        console.error('Error fetching monthly task utilization:', tasksError);
+      if (columnsError) {
+        console.error('Error checking tasks table schema:', columnsError);
         return;
       }
       
-      // Aggregate purchases by material
-      const purchasesByMaterial = purchases?.reduce((acc, curr) => {
-        if (!acc[curr.material_name]) {
-          acc[curr.material_name] = 0;
-        }
-        acc[curr.material_name] += Number(curr.quantity);
-        return acc;
-      }, {} as Record<string, number>) || {};
+      // Check if required columns exist
+      const hasRmAssigned = columns?.some(col => col.column_name === 'rm_assigned');
+      const hasQtyAssigned = columns?.some(col => col.column_name === 'qty_assigned');
+      const hasProcessAssigned = columns?.some(col => col.column_name === 'process_assigned');
       
-      // Aggregate utilization by material
-      const utilizationByMaterial = tasks?.reduce((acc, curr) => {
-        if (!acc[curr.rm_assigned]) {
-          acc[curr.rm_assigned] = 0;
+      // Initialize utilization by material
+      const utilizationByMaterial: Record<string, number> = {};
+      
+      // Only try to fetch task data if the required columns exist
+      if (hasRmAssigned && hasQtyAssigned && hasProcessAssigned) {
+        // Fetch all task assignments for the month (for utilization)
+        const { data: tasks, error: tasksError } = await supabase
+          .from('tasks')
+          .select('rm_assigned, qty_assigned')
+          .gte('date_assigned', monthStart)
+          .lte('date_assigned', monthEnd)
+          .eq('process_assigned', 'Cleaning'); // According to the spec, only cleaning process
+          
+        if (tasksError) {
+          console.error('Error fetching monthly task utilization:', tasksError);
+        } else if (tasks) {
+          // Aggregate utilization by material
+          tasks.forEach(task => {
+            if (!utilizationByMaterial[task.rm_assigned]) {
+              utilizationByMaterial[task.rm_assigned] = 0;
+            }
+            utilizationByMaterial[task.rm_assigned] += Number(task.qty_assigned);
+          });
         }
-        acc[curr.rm_assigned] += Number(curr.qty_assigned);
-        return acc;
-      }, {} as Record<string, number>) || {};
+      } else {
+        console.log('Tasks table missing required columns. Skipping utilization data.');
+      }
       
       // Update the stock items with the fetched data
       setStockItems(prevItems => 
@@ -377,6 +403,66 @@ const StockStatusView = () => {
       />
     </div>
   );
+
+  function handleOpeningBalChange(id: string, value: number) {
+    setStockItems(prevItems =>
+      prevItems.map(item => {
+        if (item.id === id || (!item.id && item.name === id)) {
+          // Calculate new closing balance with the updated opening balance
+          const closing_bal = value + item.purchases - item.utilised + item.adj_plus;
+          // Determine status based on new closing balance
+          let status = determineStatus(closing_bal, item.min_level);
+          
+          return { 
+            ...item, 
+            opening_bal: value,
+            closing_bal,
+            status
+          };
+        }
+        return item;
+      })
+    );
+  }
+
+  function handleAdjustmentChange(id: string, value: number) {
+    setStockItems(prevItems =>
+      prevItems.map(item => {
+        if (item.id === id || (!item.id && item.name === id)) {
+          // Calculate new closing balance with the updated adjustment
+          const closing_bal = item.opening_bal + item.purchases - item.utilised + value;
+          // Determine status based on new closing balance
+          let status = determineStatus(closing_bal, item.min_level);
+          
+          return { 
+            ...item, 
+            adj_plus: value,
+            closing_bal,
+            status
+          };
+        }
+        return item;
+      })
+    );
+  }
+
+  function handleMinLevelChange(id: string, value: number) {
+    setStockItems(prevItems =>
+      prevItems.map(item => {
+        if (item.id === id || (!item.id && item.name === id)) {
+          // Recalculate status based on the new min level
+          let status = determineStatus(item.closing_bal, value);
+          
+          return { 
+            ...item, 
+            min_level: value,
+            status
+          };
+        }
+        return item;
+      })
+    );
+  }
 };
 
 export default StockStatusView;
