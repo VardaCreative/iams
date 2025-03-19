@@ -107,6 +107,7 @@ const StockStatusTable: React.FC<StockStatusTableProps> = ({
                     <Input
                       type="number"
                       step="0.01"
+                      min={null} // Remove min constraint to allow negative values
                       value={item.opening_bal}
                       onChange={(e) => onOpeningBalChange(item.id || item.name, parseFloat(e.target.value) || 0)}
                       className="w-20 text-right"
@@ -122,6 +123,7 @@ const StockStatusTable: React.FC<StockStatusTableProps> = ({
                     <Input
                       type="number"
                       step="0.01"
+                      min={null} // Remove min constraint to allow negative values
                       value={item.adj_plus}
                       onChange={(e) => onAdjustmentChange(item.id || item.name, parseFloat(e.target.value) || 0)}
                       className="w-20 text-right"
