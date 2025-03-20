@@ -11,7 +11,7 @@ import { toast } from "@/hooks/use-toast";
 import { fetchStockStatus, saveStockStatus, fetchRawMaterials } from '@/lib/database';
 import { StockStatusItem } from './types';
 
-// Define a supplementary type for tasks with optional custom fields
+// Define a proper interface for tasks with optional custom fields
 interface TaskWithCustomFields {
   id: string;
   title: string;
@@ -169,9 +169,9 @@ const StockStatusView = () => {
           
         // Check if the sample has custom fields we need
         if (sampleTaskData && sampleTaskData.length > 0) {
-          const sampleTask = sampleTaskData[0] as TaskWithCustomFields;
+          const sampleTask = sampleTaskData[0] as any;
           
-          // Check if the necessary custom fields exist
+          // Check if the necessary custom fields exist using the 'in' operator for type safety
           if ('rm_assigned' in sampleTask && 'qty_assigned' in sampleTask && 'process_assigned' in sampleTask) {
             console.log('Required task columns exist, fetching utilization data');
             
