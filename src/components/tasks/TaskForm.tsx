@@ -6,6 +6,9 @@ import { Textarea } from "@/components/ui/textarea";
 import FormDialog from "@/components/common/FormDialog";
 import { Task } from './TaskManagement';
 import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Plus, Edit, Trash2, ArrowUp, ArrowDown, Save } from 'lucide-react';
+import { toast } from "@/hooks/use-toast";
 
 // Define interfaces for dropdown data
 interface RawMaterial {
@@ -18,18 +21,12 @@ interface StaffMember {
   name: string;
 }
 
-// Define the processes in the specific order
-const processes = [
+// Define the initial processes in the specific order
+const initialProcesses = [
   "Cleaning",
   "C & D",
   "Roasting",
-  "RFP",
-  "Grinding",
-  "Packing",
-  "CBD",
-  "Seeds CBD",
-  "Sample",
-  "RTP"
+  "RFP"
 ];
 
 interface TaskFormProps {
@@ -64,6 +61,12 @@ const TaskForm = ({
   const [rawMaterials, setRawMaterials] = useState<RawMaterial[]>([]);
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // State for managing processes
+  const [processes, setProcesses] = useState<string[]>(initialProcesses);
+  const [isEditingProcesses, setIsEditingProcesses] = useState(false);
+  const [newProcess, setNewProcess] = useState('');
+  const [editProcessIndex, setEditProcessIndex] = useState<number | null>(null);
 
   // Fetch data for dropdowns
   useEffect(() => {
@@ -89,6 +92,16 @@ const TaskForm = ({
           
         if (staffError) throw staffError;
         setStaffMembers(staffData || []);
+        
+        // Fetch processes from the database or use default if none exist
+        const { data: processData, error: processError } = await supabase
+          .from('processes')
+          .select('*')
+          .order('order');
+          
+        if (!processError && processData && processData.length > 0) {
+          setProcesses(processData.map(p => p.name));
+        }
         
       } catch (error) {
         console.error('Error fetching form data:', error);
@@ -117,6 +130,85 @@ const TaskForm = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData);
+  };
+
+  // Process management functions
+  const toggleProcessEditing = () => {
+    setIsEditingProcesses(!isEditingProcesses);
+    setEditProcessIndex(null);
+    setNewProcess('');
+  };
+
+  const addProcess = () => {
+    if (newProcess.trim() && !processes.includes(newProcess.trim())) {
+      setProcesses([...processes, newProcess.trim()]);
+      setNewProcess('');
+    }
+  };
+
+  const startEditProcess = (index: number) => {
+    setEditProcessIndex(index);
+    setNewProcess(processes[index]);
+  };
+
+  const saveEditProcess = () => {
+    if (editProcessIndex !== null && newProcess.trim() && !processes.includes(newProcess.trim())) {
+      const updatedProcesses = [...processes];
+      updatedProcesses[editProcessIndex] = newProcess.trim();
+      setProcesses(updatedProcesses);
+      setEditProcessIndex(null);
+      setNewProcess('');
+    }
+  };
+
+  const deleteProcess = (index: number) => {
+    const updatedProcesses = processes.filter((_, i) => i !== index);
+    setProcesses(updatedProcesses);
+  };
+
+  const moveProcess = (index: number, direction: 'up' | 'down') => {
+    if ((direction === 'up' && index === 0) || 
+        (direction === 'down' && index === processes.length - 1)) {
+      return;
+    }
+    
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    const updatedProcesses = [...processes];
+    [updatedProcesses[index], updatedProcesses[newIndex]] = 
+    [updatedProcesses[newIndex], updatedProcesses[index]];
+    
+    setProcesses(updatedProcesses);
+  };
+
+  const saveProcesses = async () => {
+    try {
+      // First, delete all existing processes
+      await supabase.from('processes').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      
+      // Then insert new processes with order
+      const processesToInsert = processes.map((name, index) => ({
+        name,
+        order: index + 1
+      }));
+      
+      const { error } = await supabase.from('processes').insert(processesToInsert);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Processes saved",
+        description: "Process list has been updated successfully"
+      });
+      
+      setIsEditingProcesses(false);
+    } catch (error) {
+      console.error('Error saving processes:', error);
+      toast({
+        title: "Failed to save processes",
+        description: "There was an error saving the process list",
+        variant: "destructive"
+      });
+    }
   };
 
   // Format date to YYYY-MM-DD for input
@@ -167,20 +259,107 @@ const TaskForm = ({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="processAssigned">Process *</Label>
-            <select
-              id="processAssigned"
-              name="processAssigned"
-              value={formData.processAssigned}
-              onChange={handleChange}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              required
-            >
-              <option value="">Select Process</option>
-              {processes.map(process => (
-                <option key={process} value={process}>{process}</option>
-              ))}
-            </select>
+            <div className="flex justify-between items-center">
+              <Label htmlFor="processAssigned">Process *</Label>
+              <Button 
+                type="button" 
+                variant="ghost" 
+                size="sm" 
+                onClick={toggleProcessEditing}
+                className="h-6 px-2"
+              >
+                {isEditingProcesses ? "Cancel" : "Manage"}
+              </Button>
+            </div>
+            
+            {isEditingProcesses ? (
+              <div className="border rounded-md p-3 space-y-3">
+                <div className="flex gap-2">
+                  <Input
+                    value={newProcess}
+                    onChange={(e) => setNewProcess(e.target.value)}
+                    placeholder="New process name"
+                    className="flex-1"
+                  />
+                  {editProcessIndex !== null ? (
+                    <Button type="button" onClick={saveEditProcess} size="sm">
+                      <Save size={16} />
+                    </Button>
+                  ) : (
+                    <Button type="button" onClick={addProcess} size="sm">
+                      <Plus size={16} />
+                    </Button>
+                  )}
+                </div>
+                
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {processes.map((process, index) => (
+                    <div key={index} className="flex items-center gap-1">
+                      <div className="flex-1 p-2 bg-secondary rounded text-sm">
+                        {process}
+                      </div>
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => moveProcess(index, 'up')}
+                        disabled={index === 0}
+                      >
+                        <ArrowUp size={14} />
+                      </Button>
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => moveProcess(index, 'down')}
+                        disabled={index === processes.length - 1}
+                      >
+                        <ArrowDown size={14} />
+                      </Button>
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => startEditProcess(index)}
+                      >
+                        <Edit size={14} />
+                      </Button>
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => deleteProcess(index)}
+                      >
+                        <Trash2 size={14} className="text-destructive" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                
+                <Button 
+                  type="button" 
+                  onClick={saveProcesses} 
+                  className="w-full"
+                  variant="outline"
+                >
+                  Save Process List
+                </Button>
+              </div>
+            ) : (
+              <select
+                id="processAssigned"
+                name="processAssigned"
+                value={formData.processAssigned}
+                onChange={handleChange}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                required
+              >
+                <option value="">Select Process</option>
+                {processes.map(process => (
+                  <option key={process} value={process}>{process}</option>
+                ))}
+              </select>
+            )}
           </div>
           
           <div className="grid gap-2">

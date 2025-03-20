@@ -54,18 +54,18 @@ const TaskManagement = () => {
         // Map database structure to frontend structure
         const mappedData = data.map(item => ({
           id: item.id,
-          taskId: item.task_id,
-          description: item.description,
-          dateAssigned: new Date(item.date_assigned),
-          rmAssigned: item.rm_assigned,
-          processAssigned: item.process_assigned,
-          qtyAssigned: item.qty_assigned,
-          staffName: item.staff_name,
+          taskId: item.task_id || `TASK${item.id.slice(0, 4)}`,
+          description: item.description || '',
+          dateAssigned: item.date_assigned ? new Date(item.date_assigned) : new Date(item.created_at || Date.now()),
+          rmAssigned: item.rm_assigned || '',
+          processAssigned: item.process_assigned || '',
+          qtyAssigned: item.qty_assigned !== undefined ? item.qty_assigned : 0,
+          staffName: item.staff_name || '',
           dateCompleted: item.date_completed ? new Date(item.date_completed) : undefined,
           completedQty: item.completed_qty,
           wastageQty: item.wastage_qty,
-          remarks: item.remarks,
-          status: item.status as 'pending' | 'in-progress' | 'completed'
+          remarks: item.remarks || '',
+          status: (item.status as 'pending' | 'in-progress' | 'completed') || 'pending'
         }));
         
         setTasks(mappedData);
@@ -159,7 +159,8 @@ const TaskManagement = () => {
         completed_qty: formattedTask.completedQty,
         wastage_qty: formattedTask.wastageQty,
         remarks: formattedTask.remarks,
-        status: formattedTask.status
+        status: formattedTask.status,
+        title: `${formattedTask.processAssigned} - ${formattedTask.rmAssigned}` // Required for the tasks table
       };
       
       console.log('Task data to save:', dbTask);

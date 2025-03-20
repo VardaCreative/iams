@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "@/hooks/use-toast";
 import { format } from 'date-fns';
@@ -25,7 +24,7 @@ interface Task {
   due_date: string;
   created_at: string;
   updated_at: string;
-  // Additional properties the component expects
+  // Additional properties for custom task fields
   task_id?: string;
   date_assigned?: string;
   rm_assigned?: string;
@@ -554,23 +553,8 @@ export const fetchTasks = async (): Promise<Task[]> => {
       
     if (error) throw error;
     
-    // Transform the data to include the expected properties
-    const transformedData = data?.map(task => ({
-      ...task,
-      task_id: task.id.slice(0, 8),  // Generate a shorter task_id from the UUID
-      date_assigned: task.created_at,
-      rm_assigned: '',  // Default values for missing fields
-      process_assigned: '',
-      qty_assigned: 0,
-      staff_name: '',
-      date_completed: task.status === 'completed' ? task.updated_at : null,
-      completed_qty: 0,
-      wastage_qty: 0,
-      remarks: ''
-    })) || [];
-    
-    console.log("Fetched tasks:", transformedData);
-    return transformedData;
+    console.log("Fetched tasks:", data);
+    return data || [];
   } catch (error) {
     handleError(error, "Failed to fetch tasks");
     return [];
@@ -585,6 +569,16 @@ export const saveTask = async (task: any) => {
     const taskToSave = { ...task };
     if (!taskToSave.id) {
       delete taskToSave.id; // Let Supabase generate the UUID
+    }
+    
+    // Make sure we have a title (required by the base tasks table)
+    if (!taskToSave.title) {
+      taskToSave.title = `${taskToSave.process_assigned || 'Task'} - ${taskToSave.rm_assigned || 'Unknown'}`;
+    }
+    
+    // Set default priority if not provided
+    if (!taskToSave.priority) {
+      taskToSave.priority = 'medium';
     }
     
     const { data, error } = await supabase
