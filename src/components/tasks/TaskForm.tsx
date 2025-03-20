@@ -7,8 +7,9 @@ import FormDialog from "@/components/common/FormDialog";
 import { Task } from './TaskManagement';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Plus, Edit, Trash2, ArrowUp, ArrowDown, Save } from 'lucide-react';
+import { Plus, Edit, Trash2, ArrowUp, ArrowDown, Save, X } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
+import { fetchProcesses, saveProcesses } from '@/lib/database';
 
 // Define interfaces for dropdown data
 interface RawMaterial {
@@ -21,13 +22,11 @@ interface StaffMember {
   name: string;
 }
 
-// Define the initial processes in the specific order
-const initialProcesses = [
-  "Cleaning",
-  "C & D",
-  "Roasting",
-  "RFP"
-];
+interface Process {
+  id?: string;
+  name: string;
+  sort_order: number;
+}
 
 interface TaskFormProps {
   open: boolean;
@@ -63,7 +62,7 @@ const TaskForm = ({
   const [loading, setLoading] = useState(true);
   
   // State for managing processes
-  const [processes, setProcesses] = useState<string[]>(initialProcesses);
+  const [processes, setProcesses] = useState<Process[]>([]);
   const [isEditingProcesses, setIsEditingProcesses] = useState(false);
   const [newProcess, setNewProcess] = useState('');
   const [editProcessIndex, setEditProcessIndex] = useState<number | null>(null);
@@ -93,14 +92,10 @@ const TaskForm = ({
         if (staffError) throw staffError;
         setStaffMembers(staffData || []);
         
-        // Fetch processes from the database or use default if none exist
-        const { data: processData, error: processError } = await supabase
-          .from('processes')
-          .select('*')
-          .order('order');
-          
-        if (!processError && processData && processData.length > 0) {
-          setProcesses(processData.map(p => p.name));
+        // Fetch processes from the database
+        const processData = await fetchProcesses();
+        if (processData && processData.length > 0) {
+          setProcesses(processData);
         }
         
       } catch (error) {
@@ -140,30 +135,54 @@ const TaskForm = ({
   };
 
   const addProcess = () => {
-    if (newProcess.trim() && !processes.includes(newProcess.trim())) {
-      setProcesses([...processes, newProcess.trim()]);
+    if (newProcess.trim() && !processes.some(p => p.name === newProcess.trim())) {
+      const newProcessItem: Process = {
+        name: newProcess.trim(),
+        sort_order: processes.length + 1
+      };
+      setProcesses([...processes, newProcessItem]);
       setNewProcess('');
+    } else {
+      toast({
+        title: "Process already exists",
+        description: "A process with this name already exists.",
+        variant: "destructive"
+      });
     }
   };
 
   const startEditProcess = (index: number) => {
     setEditProcessIndex(index);
-    setNewProcess(processes[index]);
+    setNewProcess(processes[index].name);
   };
 
   const saveEditProcess = () => {
-    if (editProcessIndex !== null && newProcess.trim() && !processes.includes(newProcess.trim())) {
+    if (editProcessIndex !== null && newProcess.trim() && !processes.some((p, i) => p.name === newProcess.trim() && i !== editProcessIndex)) {
       const updatedProcesses = [...processes];
-      updatedProcesses[editProcessIndex] = newProcess.trim();
+      updatedProcesses[editProcessIndex] = {
+        ...updatedProcesses[editProcessIndex],
+        name: newProcess.trim()
+      };
       setProcesses(updatedProcesses);
       setEditProcessIndex(null);
       setNewProcess('');
+    } else {
+      toast({
+        title: "Invalid process name",
+        description: "Process name must be unique and not empty.",
+        variant: "destructive"
+      });
     }
   };
 
   const deleteProcess = (index: number) => {
     const updatedProcesses = processes.filter((_, i) => i !== index);
-    setProcesses(updatedProcesses);
+    // Update sort_order after deletion
+    const reorderedProcesses = updatedProcesses.map((process, i) => ({
+      ...process,
+      sort_order: i + 1
+    }));
+    setProcesses(reorderedProcesses);
   };
 
   const moveProcess = (index: number, direction: 'up' | 'down') => {
@@ -177,30 +196,28 @@ const TaskForm = ({
     [updatedProcesses[index], updatedProcesses[newIndex]] = 
     [updatedProcesses[newIndex], updatedProcesses[index]];
     
-    setProcesses(updatedProcesses);
+    // Update sort_order after reordering
+    const reorderedProcesses = updatedProcesses.map((process, i) => ({
+      ...process,
+      sort_order: i + 1
+    }));
+    
+    setProcesses(reorderedProcesses);
   };
 
   const saveProcesses = async () => {
     try {
-      // First, delete all existing processes
-      await supabase.from('processes').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      // Save processes to database
+      const result = await saveProcesses(processes);
       
-      // Then insert new processes with order
-      const processesToInsert = processes.map((name, index) => ({
-        name,
-        order: index + 1
-      }));
-      
-      const { error } = await supabase.from('processes').insert(processesToInsert);
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Processes saved",
-        description: "Process list has been updated successfully"
-      });
-      
-      setIsEditingProcesses(false);
+      if (result) {
+        toast({
+          title: "Processes saved",
+          description: "Process list has been updated successfully"
+        });
+        
+        setIsEditingProcesses(false);
+      }
     } catch (error) {
       console.error('Error saving processes:', error);
       toast({
@@ -214,6 +231,11 @@ const TaskForm = ({
   // Format date to YYYY-MM-DD for input
   const formatDateForInput = (date?: Date) => {
     return date ? date.toISOString().split('T')[0] : '';
+  };
+
+  const cancelEditProcess = () => {
+    setEditProcessIndex(null);
+    setNewProcess('');
   };
 
   return (
@@ -282,11 +304,16 @@ const TaskForm = ({
                     className="flex-1"
                   />
                   {editProcessIndex !== null ? (
-                    <Button type="button" onClick={saveEditProcess} size="sm">
-                      <Save size={16} />
-                    </Button>
+                    <>
+                      <Button type="button" onClick={saveEditProcess} size="sm" variant="outline">
+                        <Save size={16} />
+                      </Button>
+                      <Button type="button" onClick={cancelEditProcess} size="sm" variant="outline">
+                        <X size={16} />
+                      </Button>
+                    </>
                   ) : (
-                    <Button type="button" onClick={addProcess} size="sm">
+                    <Button type="button" onClick={addProcess} size="sm" variant="outline">
                       <Plus size={16} />
                     </Button>
                   )}
@@ -296,7 +323,7 @@ const TaskForm = ({
                   {processes.map((process, index) => (
                     <div key={index} className="flex items-center gap-1">
                       <div className="flex-1 p-2 bg-secondary rounded text-sm">
-                        {process}
+                        {process.name}
                       </div>
                       <Button 
                         type="button" 
@@ -356,7 +383,9 @@ const TaskForm = ({
               >
                 <option value="">Select Process</option>
                 {processes.map(process => (
-                  <option key={process} value={process}>{process}</option>
+                  <option key={process.id || process.name} value={process.name}>
+                    {process.name}
+                  </option>
                 ))}
               </select>
             )}

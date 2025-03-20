@@ -616,6 +616,52 @@ export const deleteTask = async (id: string) => {
   }
 };
 
+// Function to fetch processes from the database
+export const fetchProcesses = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('processes')
+      .select('*')
+      .order('sort_order');
+      
+    if (error) throw error;
+    console.log("Fetched processes:", data);
+    return data || [];
+  } catch (error) {
+    handleError(error, "Failed to fetch processes");
+    return [];
+  }
+};
+
+// Function to save processes to the database
+export const saveProcesses = async (processes: { id?: string, name: string, sort_order: number }[]) => {
+  try {
+    console.log("Saving processes:", processes);
+    
+    // First delete all existing processes
+    const { error: deleteError } = await supabase
+      .from('processes')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000');
+      
+    if (deleteError) throw deleteError;
+    
+    // Then insert the new processes
+    const { data, error } = await supabase
+      .from('processes')
+      .insert(processes)
+      .select();
+      
+    if (error) throw error;
+    
+    console.log("Processes saved successfully:", data);
+    return data;
+  } catch (error) {
+    handleError(error, "Failed to save processes");
+    return null;
+  }
+};
+
 // Production Status operations
 export const fetchProductionStatus = async (params: { date: string, stage: string, process: string, month: string }) => {
   try {

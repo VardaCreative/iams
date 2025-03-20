@@ -14,7 +14,7 @@ export const getTaskColumns = (handleEdit: (task: Task) => void, handleDelete: (
     accessorKey: "dateAssigned",
     cell: ({ getValue }: { getValue: () => any }) => {
       const value = getValue();
-      return value instanceof Date ? value.toLocaleDateString() : '-';
+      return value instanceof Date ? value.toLocaleDateString() : value ? new Date(value).toLocaleDateString() : '-';
     }
   },
   { 
@@ -42,7 +42,7 @@ export const getTaskColumns = (handleEdit: (task: Task) => void, handleDelete: (
     accessorKey: "dateCompleted",
     cell: ({ getValue }: { getValue: () => any }) => {
       const value = getValue();
-      return value instanceof Date ? value.toLocaleDateString() : '-';
+      return value instanceof Date ? value.toLocaleDateString() : value ? new Date(value).toLocaleDateString() : '-';
     }
   },
   { 

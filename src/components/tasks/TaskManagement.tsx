@@ -59,11 +59,11 @@ const TaskManagement = () => {
           dateAssigned: item.date_assigned ? new Date(item.date_assigned) : new Date(item.created_at || Date.now()),
           rmAssigned: item.rm_assigned || '',
           processAssigned: item.process_assigned || '',
-          qtyAssigned: item.qty_assigned !== undefined ? item.qty_assigned : 0,
+          qtyAssigned: item.qty_assigned !== undefined ? Number(item.qty_assigned) : 0,
           staffName: item.staff_name || '',
           dateCompleted: item.date_completed ? new Date(item.date_completed) : undefined,
-          completedQty: item.completed_qty,
-          wastageQty: item.wastage_qty,
+          completedQty: item.completed_qty !== undefined ? Number(item.completed_qty) : undefined,
+          wastageQty: item.wastage_qty !== undefined ? Number(item.wastage_qty) : undefined,
           remarks: item.remarks || '',
           status: (item.status as 'pending' | 'in-progress' | 'completed') || 'pending'
         }));
@@ -160,7 +160,8 @@ const TaskManagement = () => {
         wastage_qty: formattedTask.wastageQty,
         remarks: formattedTask.remarks,
         status: formattedTask.status,
-        title: `${formattedTask.processAssigned} - ${formattedTask.rmAssigned}` // Required for the tasks table
+        title: `${formattedTask.processAssigned} - ${formattedTask.rmAssigned}`, // Required for the tasks table
+        priority: 'medium' // Required for the tasks table
       };
       
       console.log('Task data to save:', dbTask);

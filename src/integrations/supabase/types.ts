@@ -47,6 +47,30 @@ export type Database = {
           },
         ]
       }
+      processes: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          sort_order: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          sort_order: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          sort_order?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       production_batches: {
         Row: {
           batch_number: string
@@ -484,36 +508,66 @@ export type Database = {
       tasks: {
         Row: {
           assigned_to: string | null
+          completed_qty: number | null
           created_at: string | null
+          date_assigned: string | null
+          date_completed: string | null
           description: string | null
           due_date: string | null
           id: string
           priority: string
+          process_assigned: string | null
+          qty_assigned: number | null
+          remarks: string | null
+          rm_assigned: string | null
+          staff_name: string | null
           status: string
+          task_id: string | null
           title: string
           updated_at: string | null
+          wastage_qty: number | null
         }
         Insert: {
           assigned_to?: string | null
+          completed_qty?: number | null
           created_at?: string | null
+          date_assigned?: string | null
+          date_completed?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
           priority?: string
+          process_assigned?: string | null
+          qty_assigned?: number | null
+          remarks?: string | null
+          rm_assigned?: string | null
+          staff_name?: string | null
           status?: string
+          task_id?: string | null
           title: string
           updated_at?: string | null
+          wastage_qty?: number | null
         }
         Update: {
           assigned_to?: string | null
+          completed_qty?: number | null
           created_at?: string | null
+          date_assigned?: string | null
+          date_completed?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
           priority?: string
+          process_assigned?: string | null
+          qty_assigned?: number | null
+          remarks?: string | null
+          rm_assigned?: string | null
+          staff_name?: string | null
           status?: string
+          task_id?: string | null
           title?: string
           updated_at?: string | null
+          wastage_qty?: number | null
         }
         Relationships: [
           {
