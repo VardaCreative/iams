@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -9,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit, Trash2, ArrowUp, ArrowDown, Save, X } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
-import { fetchProcesses, saveProcesses } from '@/lib/database';
+import { fetchProcesses } from '@/lib/database';
 
 // Define interfaces for dropdown data
 interface RawMaterial {
@@ -205,19 +204,29 @@ const TaskForm = ({
     setProcesses(reorderedProcesses);
   };
 
+  // Fixed saveProcesses function - removed argument and fixed return value check
   const saveProcesses = async () => {
     try {
       // Save processes to database
-      const result = await saveProcesses(processes);
-      
-      if (result) {
-        toast({
-          title: "Processes saved",
-          description: "Process list has been updated successfully"
-        });
+      const { data, error } = await supabase
+        .from('processes')
+        .upsert(
+          processes.map(process => ({
+            id: process.id,
+            name: process.name,
+            sort_order: process.sort_order
+          }))
+        );
         
-        setIsEditingProcesses(false);
-      }
+      if (error) throw error;
+      
+      toast({
+        title: "Processes saved",
+        description: "Process list has been updated successfully"
+      });
+      
+      setIsEditingProcesses(false);
+      return true;
     } catch (error) {
       console.error('Error saving processes:', error);
       toast({
@@ -225,6 +234,7 @@ const TaskForm = ({
         description: "There was an error saving the process list",
         variant: "destructive"
       });
+      return false;
     }
   };
 

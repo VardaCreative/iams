@@ -81,9 +81,9 @@ export const getTaskColumns = (handleEdit: (task: Task) => void, handleDelete: (
   },
   { 
     header: "Actions", 
-    id: "actions",
-    cell: ({ row }: { row: { original: Task } }) => {
-      const task = row.original;
+    accessorKey: "actions",
+    cell: (info: any) => {
+      const task = info.row.original;
       return (
         <div className="flex items-center gap-2">
           <Button
