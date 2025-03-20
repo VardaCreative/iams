@@ -2,10 +2,6 @@
 import React, { useState } from 'react';
 import PageContainer from '@/components/layout/PageContainer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Plus, Download, Upload } from 'lucide-react';
-import DataTable from '@/components/ui/data-table';
 import StaffManagement from '@/components/tasks/StaffManagement';
 import TaskManagement from '@/components/tasks/TaskManagement';
 

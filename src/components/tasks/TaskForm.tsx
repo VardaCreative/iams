@@ -1,22 +1,35 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import FormDialog from "@/components/common/FormDialog";
 import { Task } from './TaskManagement';
+import { supabase } from '@/integrations/supabase/client';
 
-// Sample data for dropdowns
+// Define interfaces for dropdown data
+interface RawMaterial {
+  id: string;
+  name: string;
+}
+
+interface StaffMember {
+  id: string;
+  name: string;
+}
+
+// Define the processes in the specific order
 const processes = [
-  "Cleaning", "Grinding", "Packing", "CBD", "Seeds CBD", "RFR", "Roasting", "RTP", "Sample"
-];
-
-const rawMaterials = [
-  "Red Chilli", "Turmeric", "Black Pepper", "Cloves", "Cardamom"
-];
-
-const staffMembers = [
-  "John Doe", "Jane Smith", "Robert Johnson", "Sarah Williams"
+  "Cleaning",
+  "C & D",
+  "Roasting",
+  "RFP",
+  "Grinding",
+  "Packing",
+  "CBD",
+  "Seeds CBD",
+  "Sample",
+  "RTP"
 ];
 
 interface TaskFormProps {
@@ -34,7 +47,7 @@ const TaskForm = ({
   initialData,
   isLoading = false
 }: TaskFormProps) => {
-  const [formData, setFormData] = React.useState<Task>({
+  const [formData, setFormData] = useState<Task>({
     id: '',
     taskId: '',
     description: '',
@@ -46,6 +59,48 @@ const TaskForm = ({
     status: 'pending',
     ...initialData
   });
+
+  // State for dropdown options
+  const [rawMaterials, setRawMaterials] = useState<RawMaterial[]>([]);
+  const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch data for dropdowns
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        // Fetch raw materials from the database
+        const { data: materialsData, error: materialsError } = await supabase
+          .from('raw_materials')
+          .select('id, name')
+          .eq('status', 'active')
+          .order('name');
+          
+        if (materialsError) throw materialsError;
+        setRawMaterials(materialsData || []);
+        
+        // Fetch staff members from the database
+        const { data: staffData, error: staffError } = await supabase
+          .from('staff')
+          .select('id, name')
+          .eq('status', 'active')
+          .order('name');
+          
+        if (staffError) throw staffError;
+        setStaffMembers(staffData || []);
+        
+      } catch (error) {
+        console.error('Error fetching form data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (open) {
+      fetchData();
+    }
+  }, [open]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -76,7 +131,7 @@ const TaskForm = ({
       open={open}
       onOpenChange={onOpenChange}
       onSubmit={handleSubmit}
-      isLoading={isLoading}
+      isLoading={isLoading || loading}
     >
       <div className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -104,7 +159,7 @@ const TaskForm = ({
             >
               <option value="">Select Raw Material</option>
               {rawMaterials.map(material => (
-                <option key={material} value={material}>{material}</option>
+                <option key={material.id} value={material.name}>{material.name}</option>
               ))}
             </select>
           </div>
@@ -134,7 +189,7 @@ const TaskForm = ({
               id="qtyAssigned"
               name="qtyAssigned"
               type="number"
-              min="0"
+              step="0.01"
               value={formData.qtyAssigned}
               onChange={handleChange}
               required
@@ -154,7 +209,7 @@ const TaskForm = ({
           >
             <option value="">Select Staff Member</option>
             {staffMembers.map(staff => (
-              <option key={staff} value={staff}>{staff}</option>
+              <option key={staff.id} value={staff.name}>{staff.name}</option>
             ))}
           </select>
         </div>
@@ -207,7 +262,7 @@ const TaskForm = ({
               id="completedQty"
               name="completedQty"
               type="number"
-              min="0"
+              step="0.01"
               value={formData.completedQty !== undefined ? formData.completedQty : ''}
               onChange={handleChange}
             />
@@ -219,7 +274,7 @@ const TaskForm = ({
               id="wastageQty"
               name="wastageQty"
               type="number"
-              min="0"
+              step="0.01"
               value={formData.wastageQty !== undefined ? formData.wastageQty : ''}
               onChange={handleChange}
             />
