@@ -1,10 +1,11 @@
+
 import React from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { Task } from './TaskManagement';
-import { ColumnDef, useTable } from '@tanstack/react-table';
+import { ColumnDef } from '@tanstack/react-table';
 
 export const getTaskColumns = (
   handleEdit: (task: Task) => void,
@@ -30,7 +31,7 @@ export const getTaskColumns = (
     header: "Date Assigned",
     accessorKey: "dateAssigned",
     cell: ({ row }) => {
-      const date = row?.original?.dateAssigned;
+      const date = row.original.dateAssigned;
       return date ? format(new Date(date), 'dd/MM/yyyy') : '';
     },
   },
@@ -42,8 +43,8 @@ export const getTaskColumns = (
     header: "Completion",
     accessorKey: "completedQty",
     cell: ({ row }) => {
-      const completed = row?.original?.completedQty;
-      const assigned = row?.original?.qtyAssigned;
+      const completed = row.original.completedQty;
+      const assigned = row.original.qtyAssigned;
       const percentage = assigned > 0 ? Math.round((completed || 0) / assigned * 100) : 0;
       return completed !== undefined ? `${completed} (${percentage}%)` : '-';
     },
@@ -52,7 +53,7 @@ export const getTaskColumns = (
     header: "Status",
     accessorKey: "status",
     cell: ({ row }) => {
-      const status = row?.original?.status;
+      const status = row.original.status;
       let badgeColor;
       
       switch (status) {
@@ -68,7 +69,7 @@ export const getTaskColumns = (
       
       return (
         <Badge className={`${badgeColor} hover:${badgeColor}`}>
-          {status ? status.charAt(0).toUpperCase() + status.slice(1).replace('-', ' ') : ''}
+          {status.charAt(0).toUpperCase() + status.slice(1).replace('-', ' ')}
         </Badge>
       );
     },
@@ -77,7 +78,7 @@ export const getTaskColumns = (
     header: "Actions",
     accessorKey: "actions",
     cell: ({ row }) => {
-      return row?.original ? (
+      return (
         <div className="flex space-x-2">
           <Button
             variant="ghost"
@@ -94,7 +95,7 @@ export const getTaskColumns = (
             <Trash2 className="h-4 w-4 text-destructive" />
           </Button>
         </div>
-      ) : null;
+      );
     },
   },
 ];
