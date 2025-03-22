@@ -1,12 +1,11 @@
-
 import React from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { Task } from './TaskManagement';
-import { ColumnDef } from '@tanstack/react-table';
-
+import { ColumnDef } from '@tanstack/table-core';
+// Remove the useTable import as it's not being used in this file
 
 export const getTaskColumns = (
   handleEdit: (task: Task) => void,
