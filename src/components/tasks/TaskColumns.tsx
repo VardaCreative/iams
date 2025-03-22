@@ -6,6 +6,7 @@ import { Edit, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { Task } from './TaskManagement';
 import { ColumnDef } from '@tanstack/react-table';
+import { useTable } from '@tanstack/react-table';
 
 export const getTaskColumns = (
   handleEdit: (task: Task) => void,
