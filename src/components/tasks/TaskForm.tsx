@@ -1,17 +1,13 @@
-
-import React, { useState, useEffect } from 'react';
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import FormDialog from "@/components/common/FormDialog";
-import { Task } from './TaskManagement';
+import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Plus, Edit, Trash2, ArrowUp, ArrowDown, Save, X } from 'lucide-react';
-import { toast } from "@/hooks/use-toast";
-import { fetchProcesses } from '@/lib/database';
+import { toast } from 'react-toastify';
 
-// Define interfaces for dropdown data
+interface Process {
+  id?: string;
+  name: string;
+  sort_order: number;
+}
+
 interface RawMaterial {
   id: string;
   name: string;
@@ -20,12 +16,6 @@ interface RawMaterial {
 interface StaffMember {
   id: string;
   name: string;
-}
-
-interface Process {
-  id?: string;
-  name: string;
-  sort_order: number;
 }
 
 interface TaskFormProps {
@@ -136,16 +126,13 @@ const TaskForm = ({
 
   const addProcess = () => {
     if (newProcess.trim() && !processes.some(p => p.name === newProcess.trim())) {
-      const newProcessItem: Process = {
-        name: newProcess.trim(),
-        sort_order: processes.length + 1
-      };
-      setProcesses([...processes, newProcessItem]);
+      const updatedProcesses = [...processes, { name: newProcess.trim(), sort_order: processes.length + 1 }];
+      setProcesses(updatedProcesses);
       setNewProcess('');
     } else {
       toast({
-        title: "Process already exists",
-        description: "A process with this name already exists.",
+        title: "Invalid process name",
+        description: "Process name must be unique and not empty.",
         variant: "destructive"
       });
     }
@@ -259,259 +246,60 @@ const TaskForm = ({
       isLoading={isLoading || loading}
     >
       <div className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="dateAssigned">Date Assigned *</Label>
-            <Input
-              id="dateAssigned"
-              name="dateAssigned"
-              type="date"
-              value={formatDateForInput(formData.dateAssigned)}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          
-          <div className="grid gap-2">
-            <Label htmlFor="rmAssigned">Raw Material *</Label>
-            <select
-              id="rmAssigned"
-              name="rmAssigned"
-              value={formData.rmAssigned}
-              onChange={handleChange}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              required
-            >
-              <option value="">Select Raw Material</option>
-              {rawMaterials.map(material => (
-                <option key={material.id} value={material.name}>{material.name}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="grid gap-2">
-            <div className="flex justify-between items-center">
-              <Label htmlFor="processAssigned">Process *</Label>
-              <Button 
-                type="button" 
-                variant="ghost" 
-                size="sm" 
-                onClick={toggleProcessEditing}
-                className="h-6 px-2"
-              >
-                {isEditingProcesses ? "Cancel" : "Manage"}
-              </Button>
-            </div>
-            
-            {isEditingProcesses ? (
-              <div className="border rounded-md p-3 space-y-3">
-                <div className="flex gap-2">
-                  <Input
-                    value={newProcess}
-                    onChange={(e) => setNewProcess(e.target.value)}
-                    placeholder="New process name"
-                    className="flex-1"
-                  />
-                  {editProcessIndex !== null ? (
-                    <>
-                      <Button type="button" onClick={saveEditProcess} size="sm" variant="outline">
-                        <Save size={16} />
-                      </Button>
-                      <Button type="button" onClick={cancelEditProcess} size="sm" variant="outline">
-                        <X size={16} />
-                      </Button>
-                    </>
-                  ) : (
-                    <Button type="button" onClick={addProcess} size="sm" variant="outline">
-                      <Plus size={16} />
-                    </Button>
-                  )}
-                </div>
-                
-                <div className="space-y-2 max-h-40 overflow-y-auto">
-                  {processes.map((process, index) => (
-                    <div key={index} className="flex items-center gap-1">
-                      <div className="flex-1 p-2 bg-secondary rounded text-sm">
-                        {process.name}
-                      </div>
-                      <Button 
-                        type="button" 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => moveProcess(index, 'up')}
-                        disabled={index === 0}
-                      >
-                        <ArrowUp size={14} />
-                      </Button>
-                      <Button 
-                        type="button" 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => moveProcess(index, 'down')}
-                        disabled={index === processes.length - 1}
-                      >
-                        <ArrowDown size={14} />
-                      </Button>
-                      <Button 
-                        type="button" 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => startEditProcess(index)}
-                      >
-                        <Edit size={14} />
-                      </Button>
-                      <Button 
-                        type="button" 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => deleteProcess(index)}
-                      >
-                        <Trash2 size={14} className="text-destructive" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-                
-                <Button 
-                  type="button" 
-                  onClick={saveProcesses} 
-                  className="w-full"
-                  variant="outline"
-                >
-                  Save Process List
-                </Button>
-              </div>
-            ) : (
-              <select
-                id="processAssigned"
-                name="processAssigned"
-                value={formData.processAssigned}
-                onChange={handleChange}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                required
-              >
-                <option value="">Select Process</option>
-                {processes.map(process => (
-                  <option key={process.id || process.name} value={process.name}>
-                    {process.name}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-          
-          <div className="grid gap-2">
-            <Label htmlFor="qtyAssigned">Assigned Quantity *</Label>
-            <Input
-              id="qtyAssigned"
-              name="qtyAssigned"
-              type="number"
-              step="0.01"
-              value={formData.qtyAssigned}
-              onChange={handleChange}
-              required
-            />
-          </div>
-        </div>
-
-        <div className="grid gap-2">
-          <Label htmlFor="staffName">Assign Staff *</Label>
-          <select
-            id="staffName"
-            name="staffName"
-            value={formData.staffName}
-            onChange={handleChange}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            required
-          >
-            <option value="">Select Staff Member</option>
-            {staffMembers.map(staff => (
-              <option key={staff.id} value={staff.name}>{staff.name}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="grid gap-2">
-          <Label htmlFor="description">Task Description</Label>
-          <Textarea
-            id="description"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            placeholder="Describe the task..."
-            rows={2}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="dateCompleted">Date Completed</Label>
-            <Input
-              id="dateCompleted"
-              name="dateCompleted"
-              type="date"
-              value={formatDateForInput(formData.dateCompleted)}
-              onChange={handleChange}
-            />
-          </div>
-          
-          <div className="grid gap-2">
-            <Label htmlFor="status">Status *</Label>
-            <select
-              id="status"
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              required
-            >
-              <option value="pending">Pending</option>
-              <option value="in-progress">In Progress</option>
-              <option value="completed">Completed</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="completedQty">Completed Quantity</Label>
-            <Input
-              id="completedQty"
-              name="completedQty"
-              type="number"
-              step="0.01"
-              value={formData.completedQty !== undefined ? formData.completedQty : ''}
-              onChange={handleChange}
-            />
-          </div>
-          
-          <div className="grid gap-2">
-            <Label htmlFor="wastageQty">Wastage Quantity</Label>
-            <Input
-              id="wastageQty"
-              name="wastageQty"
-              type="number"
-              step="0.01"
-              value={formData.wastageQty !== undefined ? formData.wastageQty : ''}
-              onChange={handleChange}
-            />
-          </div>
-        </div>
-
-        <div className="grid gap-2">
-          <Label htmlFor="remarks">Remarks</Label>
-          <Textarea
-            id="remarks"
-            name="remarks"
-            value={formData.remarks || ''}
-            onChange={handleChange}
-            placeholder="Any additional notes..."
-            rows={2}
-          />
-        </div>
+        <input
+          type="text"
+          name="description"
+          value={formData.description}
+          onChange={handleChange}
+          placeholder="Task Description"
+          required
+        />
+        <input
+          type="date"
+          name="dateAssigned"
+          value={formatDateForInput(formData.dateAssigned)}
+          onChange={handleChange}
+          required
+        />
+        <select name="rmAssigned" value={formData.rmAssigned} onChange={handleChange} required>
+          <option value="" disabled>Select Raw Material</option>
+          {rawMaterials.map(material => (
+            <option key={material.id} value={material.name}>{material.name}</option>
+          ))}
+        </select>
+        <select name="processAssigned" value={formData.processAssigned} onChange={handleChange} required>
+          <option value="" disabled>Select Process</option>
+          {processes.map(process => (
+            <option key={process.id} value={process.name}>{process.name}</option>
+          ))}
+        </select>
+        <input
+          type="number"
+          name="qtyAssigned"
+          value={formData.qtyAssigned}
+          onChange={handleChange}
+          placeholder="Quantity Assigned"
+          required
+        />
+        <select name="staffName" value={formData.staffName} onChange={handleChange} required>
+          <option value="" disabled>Select Staff</option>
+          {staffMembers.map(staff => (
+            <option key={staff.id} value={staff.name}>{staff.name}</option>
+          ))}
+        </select>
+        <textarea
+          name="remarks"
+          value={formData.remarks}
+          onChange={handleChange}
+          placeholder="Remarks"
+        />
+        <select name="status" value={formData.status} onChange={handleChange} required>
+          <option value="pending">Pending</option>
+          <option value="in-progress">In Progress</option>
+          <option value="completed">Completed</option>
+        </select>
       </div>
+      {/* Add process management UI here */}
     </FormDialog>
   );
 };
